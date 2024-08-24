@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import WalletModal from './WalletModal';
-import '../styles/metaMaskLogin.css';
+import '../../styles/metaMaskLogin.css';
+
+declare global {
+  interface Window {
+    ethereum: any;
+  }
+}
 
 interface MetaMaskLoginProps {
   onLogin: (account: string) => void;

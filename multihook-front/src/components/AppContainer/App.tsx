@@ -1,11 +1,19 @@
 import React, { useState } from 'react';
-import Sidebar from './Sidebar';
-import HookList from './HookList';
-import HookDetails from './HookDetails';
-import MetaMaskLogin from './MetaMaskLogin';
-import CreateHook from './CreateHook';
-import NextStep from './NextStep';
-import '../styles/app.css';
+import Sidebar from '../Sidebar/Sidebar';
+
+import NextStep from '../HookManagement/NextStep';
+import HookList from '../HookManagement/HookList';
+import HookDetails from '../HookManagement/HookDetails';
+import CreateHook from '../HookManagement/CreateHook';
+import MetaMaskLogin from '../Auth/MetaMaskLogin';
+
+import '../../styles/app.css';
+
+declare global {
+  interface Window {
+    ethereum: any;
+  }
+}
 
 const App: React.FC = () => {
   const [currentSection, setCurrentSection] = useState('hookList');

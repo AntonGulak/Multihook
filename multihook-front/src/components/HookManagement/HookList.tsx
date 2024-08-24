@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import HookCard from './HookCard';
-import '../styles/hookList.css';
+import '../../styles/hookList.css';
 
 interface Hook {
   id: string;

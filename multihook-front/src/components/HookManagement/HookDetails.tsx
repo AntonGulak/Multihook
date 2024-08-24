@@ -1,5 +1,5 @@
 import React from 'react';
-import '../styles/hookDetails.css';
+import '../../styles/hookDetails.css';
 
 interface HookDetailsProps {
   hook: {

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import '../styles/createHook.css';
+import '../../styles/createHook.css';
 
 const CreateHook: React.FC = () => {
   const [network, setNetwork] = useState('');

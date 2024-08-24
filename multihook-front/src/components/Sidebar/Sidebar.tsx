@@ -1,5 +1,5 @@
 import React from 'react';
-import '../styles/sidebar.css';
+import '../../styles/sidebar.css';
 
 interface SidebarProps {
   setCurrentSection: (section: string) => void;
