@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ContractCard from './ContractCard';
-import '../styles/app.css';  // Убедитесь, что стили подключены
+import '../styles/contractList.css'; 
 
 interface Contract {
   id: string;
@@ -14,7 +14,6 @@ const ContractList: React.FC = () => {
   const [contracts, setContracts] = useState<Contract[]>([]);
 
   useEffect(() => {
-    // Заглушка для получения данных смарт-контрактов
     const mockContracts = [
       {
         id: '1',

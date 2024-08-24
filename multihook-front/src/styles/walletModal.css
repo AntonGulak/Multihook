@@ -4,12 +4,12 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5); /* Полупрозрачный черный фон */
+  background: rgba(0, 0, 0, 0.5); 
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
-  backdrop-filter: blur(5px); /* Основное размытие */
+  backdrop-filter: blur(5px);
   overflow: hidden;
 }
 
@@ -20,7 +20,7 @@
   height: 300%;
   background: radial-gradient(circle at center, rgba(255, 255, 255, 0.1), rgba(0, 0, 0, 0.5) 70%);
   opacity: 0.6;
-  pointer-events: none; /* Элемент не будет мешать взаимодействию */
+  pointer-events: none;
 }
 
 .modal-content {
@@ -30,7 +30,7 @@
   width: 300px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
   position: relative;
-  z-index: 1001; /* Устанавливаем выше, чтобы не перекрывалось фоном */
+  z-index: 1001;
 }
 
 .modal-header {
@@ -75,27 +75,13 @@
   transition: background-color 0.3s;
 }
 
-
 .wallet-btn img {
   width: 24px;
   height: 24px;
   object-fit: contain;
-  margin-right: 10px; /* Отступ между иконкой и текстом */
-}
-
-.wallet-btn {
-  justify-content: center; /* Центрирование всего содержимого кнопки */
-}
-
-.wallet-btn span {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start; /* Иконка и текст выравниваются по левому краю внутри кнопки */
-  width: 100%;
+  margin-right: 10px;
 }
 
 .wallet-btn:hover {
   background-color: #34495e;
 }
-
-

@@ -1,7 +1,7 @@
 body {
   margin: 0;
   font-family: 'Inter', sans-serif;
-  background-color: #1f1f2e;
+  background: linear-gradient(to bottom, #3a8ec3, #1f1f2e);
   color: #fff;
 }
 
@@ -11,10 +11,11 @@ body {
 }
 
 .sidebar {
-  width: 250px;
-  background-color: #27293d;
+  width: 220px; /* Уменьшена ширина по требованию */
+  background: linear-gradient(to bottom, #203a43, #0f2027);
   padding: 20px;
   border-right: 1px solid #3a3d55;
+  box-shadow: 2px 0px 10px rgba(0, 0, 0, 0.5);
 }
 
 .sidebar h2 {
@@ -35,11 +36,12 @@ body {
   font-weight: 500;
   color: #b0b3c2;
   cursor: pointer;
-  transition: color 0.2s;
+  transition: color 0.3s, transform 0.3s;
 }
 
 .sidebar ul li:hover {
   color: #ffffff;
+  transform: translateX(10px);
 }
 
 .content {
@@ -64,11 +66,12 @@ body {
   border-radius: 10px;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: background-color 0.3s, transform 0.3s;
 }
 
 .connect-wallet-btn:hover {
   background-color: #ff7c2a;
+  transform: scale(1.05);
 }
 
 .account-display {
@@ -81,43 +84,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.contract-list {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  margin-top: 20px;
-}
-
-.contract-card {
-  background-color: #2b2d42;
-  padding: 20px;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: transform 0.3s, box-shadow 0.3s;
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-.contract-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.3);
-}
-
-.contract-card h3 {
-  margin: 0;
-  font-size: 1.25rem;
-  color: #ffffff;
-}
-
-.contract-card p {
-  margin: 5px 0;
-  color: #b0b3c2;
-}
-
-.contract-card .contract-address {
-  font-family: monospace;
-  color: #ff8e3c;
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .main-content {
@@ -144,23 +111,10 @@ body {
   font-weight: 600;
   font-size: 1rem;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: background-color 0.3s, transform 0.3s;
 }
 
 .main-btn:hover {
   background-color: #2b66d9;
-}
-
-.contract-details {
-  padding: 20px;
-}
-
-.contract-details h2 {
-  font-size: 1.75rem;
-  margin-bottom: 20px;
-}
-
-.contract-details p {
-  font-size: 1rem;
-  color: #b0b3c2;
+  transform: scale(1.05);
 }

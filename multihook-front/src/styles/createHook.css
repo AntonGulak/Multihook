@@ -7,9 +7,10 @@
 
 /* Сайдбар */
 .sidebar {
-  width: 250px; /* Ширина сайдбара */
-  background-color: #1f1f2e;
+  width: 250px;
+  background: linear-gradient(to bottom, #203a43, #0f2027);
   padding: 20px;
+  box-shadow: 2px 0px 10px rgba(0, 0, 0, 0.5);
 }
 
 /* Контент */
@@ -26,10 +27,15 @@
 .hook-form {
   width: 100%;
   max-width: 600px;
-  background-color: #2b2d42;
+  background: linear-gradient(to bottom, #2b2d42, #1f1f2e);
   padding: 30px;
   border-radius: 10px;
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.5);
+  transition: transform 0.3s;
+}
+
+.hook-form:hover {
+  transform: translateY(-5px);
 }
 
 .form-group {
@@ -53,6 +59,7 @@
   background-color: #1f1f2e;
   color: #ffffff;
   font-size: 1rem;
+  transition: border-color 0.3s;
 }
 
 .form-group input::placeholder,
@@ -77,11 +84,12 @@
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: background-color 0.3s, transform 0.3s;
 }
 
 .submit-btn:hover {
   background-color: #2b66d9;
+  transform: scale(1.05);
 }
 
 /* Прогресс-бар */

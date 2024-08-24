@@ -3,16 +3,20 @@ import '../styles/sidebar.css';
 
 interface SidebarProps {
   setCurrentSection: (section: string) => void;
+  width: number;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ setCurrentSection }) => {
+const Sidebar: React.FC<SidebarProps> = ({ setCurrentSection, width }) => {
+  // Рассчитываем размер шрифта на основе ширины
+  const fontSize = Math.max(14, width * 0.08); // минимальный размер шрифта - 14px
+
   return (
-    <div className="sidebar">
-      <h2>Multihook</h2>
+    <div className="sidebar" style={{ width }}>
+      <h2 style={{ fontSize: fontSize * 1.2 }}>Multihook</h2>
       <ul>
-        <li onClick={() => setCurrentSection('contractList')}>Мои DApps</li>
-        <li onClick={() => setCurrentSection('createHook')}>Создать DApp</li>
-        <li onClick={() => setCurrentSection('nextStep')}>Следующий Шаг</li>
+        <li style={{ fontSize }} onClick={() => setCurrentSection('contractList')}>Hooks</li>
+        <li style={{ fontSize }} onClick={() => setCurrentSection('createHook')}>Create hook</li>
+        {/* <li onClick={() => setCurrentSection('nextStep')}>Следующий Шаг</li> */}
       </ul>
     </div>
   );

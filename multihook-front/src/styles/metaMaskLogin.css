@@ -13,9 +13,10 @@
   border-radius: 10px;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: background-color 0.3s, transform 0.3s;
 }
 
 .connect-wallet-btn:hover {
   background-color: #ff7c2a;
+  transform: scale(1.05);
 }

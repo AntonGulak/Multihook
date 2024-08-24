@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import WalletModal from './WalletModal';
 import '../styles/metaMaskLogin.css';
 
@@ -8,13 +8,15 @@ interface MetaMaskLoginProps {
 
 const MetaMaskLogin: React.FC<MetaMaskLoginProps> = ({ onLogin }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [account, setAccount] = useState<string | null>(null);
 
   const connectMetaMask = async () => {
     if (window.ethereum) {
       try {
         const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        setAccount(accounts[0]);
         onLogin(accounts[0]);
-        setIsModalOpen(false);  // Закрываем модалку после успешного подключения
+        setIsModalOpen(false);
       } catch (error) {
         console.error("Failed to connect to MetaMask", error);
       }
@@ -24,10 +26,27 @@ const MetaMaskLogin: React.FC<MetaMaskLoginProps> = ({ onLogin }) => {
   };
 
   const connectWalletConnect = () => {
-    // Здесь будет логика подключения через WalletConnect
     alert("WalletConnect is not yet implemented.");
-    setIsModalOpen(false);  // Закрываем модалку после попытки подключения
+    setIsModalOpen(false);
   };
+
+  useEffect(() => {
+    if (window.ethereum) {
+      const handleAccountsChanged = (accounts: string[]) => {
+        if (accounts.length > 0) {
+          setAccount(accounts[0]);
+        }
+      };
+
+      window.ethereum.on('accountsChanged', handleAccountsChanged);
+
+      return () => {
+        if (window.ethereum.removeListener) {
+          window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+        }
+      };
+    }
+  }, []);
 
   return (
     <div className="metaMask-login">
