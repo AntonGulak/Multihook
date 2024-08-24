@@ -1,14 +1,13 @@
 import React from 'react';
-import '../../styles/sidebar.css';
+import '../../styles/sidebar/sidebar.css';
 
 interface SidebarProps {
-  setCurrentSection: (section: string) => void;
+  setCurrentSection: (section: 'hookList' | 'createHook' | 'nextStep') => void;
   width: number;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ setCurrentSection, width }) => {
-  // Рассчитываем размер шрифта на основе ширины
-  const fontSize = Math.max(14, width * 0.08); // минимальный размер шрифта - 14px
+  const fontSize = Math.max(14, width * 0.08);
 
   return (
     <div className="sidebar" style={{ width }}>

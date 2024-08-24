@@ -1,5 +1,5 @@
 import React from 'react';
-import '../../styles/walletModal.css';
+import '../../styles/auth/walletModal.css';
 
 interface WalletModalProps {
   onClose: () => void;

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import '../../styles/createHook.css';
+import React, { useState, useCallback } from 'react';
+import '../../styles/hookManagement/createHook.css';
 
 const CreateHook: React.FC = () => {
   const [network, setNetwork] = useState('');
@@ -7,8 +7,12 @@ const CreateHook: React.FC = () => {
   const [hookLogo, setHookLogo] = useState('');
   const [description, setDescription] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
+    if (!network || !hookName || !hookLogo || !description) {
+      alert("Please fill in all fields");
+      return;
+    }
 
     // Закомментированная отправка данных на бэкенд
     /*
@@ -19,7 +23,7 @@ const CreateHook: React.FC = () => {
     });
     */
     // Действие после отправки формы
-  };
+  }, [network, hookName, hookLogo, description]);
 
   return (
     <div className="hook-form">

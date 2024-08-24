@@ -1,13 +1,12 @@
-import React, { useState } from 'react';
-import Sidebar from '../Sidebar/Sidebar';
+import React, { useState, useMemo, useCallback } from 'react';
+import Sidebar from '../sidebar/Sidebar';
+import NextStep from '../hookManagement/NextStep';
+import HookList, { Hook } from '../hookManagement/HookList';
+import HookDetails from '../hookManagement/HookDetails';
+import CreateHook from '../hookManagement/CreateHook';
+import MetaMaskLogin from '../auth/MetaMaskLogin';
 
-import NextStep from '../HookManagement/NextStep';
-import HookList from '../HookManagement/HookList';
-import HookDetails from '../HookManagement/HookDetails';
-import CreateHook from '../HookManagement/CreateHook';
-import MetaMaskLogin from '../Auth/MetaMaskLogin';
-
-import '../../styles/app.css';
+import '../../styles/appContainer/app.css';
 
 declare global {
   interface Window {
@@ -16,64 +15,65 @@ declare global {
 }
 
 const App: React.FC = () => {
-  const [currentSection, setCurrentSection] = useState('hookList');
-  const [selectedHook, setSelectedHook] = useState<any | null>(null);
+  const [currentSection, setCurrentSection] = useState<'hookList' | 'hookDetails' | 'createHook' | 'nextStep'>('hookList');
+  const [selectedHook, setSelectedHook] = useState<Hook | null>(null);
   const [account, setAccount] = useState<string | null>(null);
-  const [sidebarWidth, setSidebarWidth] = useState(200); // начальная ширина сайдбара
+  const [sidebarWidth, setSidebarWidth] = useState(200);
   const [isDragging, setIsDragging] = useState(false);
 
-  const handleLogin = (account: string) => {
+  const handleLogin = useCallback((account: string) => {
     setAccount(account);
-  };
+  }, []);
 
-  const handleMouseDown = () => {
+  const handleMouseDown = useCallback(() => {
     setIsDragging(true);
-  };
+  }, []);
 
-  const handleMouseMove = (e: React.MouseEvent) => {
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (isDragging) {
-      setSidebarWidth(Math.max(e.clientX, 150)); // минимальная ширина сайдбара 150px
+      setSidebarWidth(prevWidth => Math.max(e.clientX, 150));
     }
-  };
+  }, [isDragging]);
 
-  const handleMouseUp = () => {
+  const handleMouseUp = useCallback(() => {
     setIsDragging(false);
-  };
+  }, []);
 
-  const handleSelectHook = (hook: any) => {
+  const handleSelectHook = useCallback((hook: Hook) => {
     setSelectedHook(hook);
     setCurrentSection('hookDetails');
-  };
+  }, []);
 
-  const handleBackToList = () => {
+  const handleBackToList = useCallback(() => {
     setSelectedHook(null);
     setCurrentSection('hookList');
-  };
+  }, []);
+
+  const content = useMemo(() => {
+    if (!account) {
+      return <MetaMaskLogin onLogin={handleLogin} />;
+    }
+
+    switch (currentSection) {
+      case 'hookList':
+        return <HookList onSelectHook={handleSelectHook} />;
+      case 'hookDetails':
+        return selectedHook && <HookDetails hook={selectedHook} onBack={handleBackToList} />;
+      case 'createHook':
+        return <CreateHook />;
+      case 'nextStep':
+        return <NextStep />;
+      default:
+        return null;
+    }
+  }, [account, currentSection, selectedHook, handleLogin, handleSelectHook, handleBackToList]);
 
   return (
-    <div
-      className="app-container"
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-    >
+    <div className="app-container" onMouseMove={handleMouseMove} onMouseUp={handleMouseUp}>
       <Sidebar setCurrentSection={setCurrentSection} width={sidebarWidth} />
-      <div
-        className="sidebar-resizer"
-        onMouseDown={handleMouseDown}
-      />
+      <div className="sidebar-resizer" onMouseDown={handleMouseDown} />
       <div className="content">
-        {account ? (
-          <>
-            {currentSection === 'hookList' && <HookList onSelectHook={handleSelectHook} />}
-            {currentSection === 'hookDetails' && selectedHook && (
-              <HookDetails hook={selectedHook} onBack={handleBackToList} />
-            )}
-            {currentSection === 'createHook' && <CreateHook />}
-            {currentSection === 'nextStep' && <NextStep />}
-          </>
-        ) : (
-          <MetaMaskLogin onLogin={handleLogin} />
-        )}
+        {content}
       </div>
     </div>
   );
