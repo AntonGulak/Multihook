@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import Sidebar from './Sidebar';
 import ContractList from './ContractList';
+import ContractDetails from './ContractDetails';
 import MetaMaskLogin from './MetaMaskLogin';
-import CreateHook from '../pages/CreateHook';
-import NextStep from '../pages/NextStep';
+import CreateHook from './CreateHook';
+import NextStep from './NextStep';
 import '../styles/app.css';
 
 const App: React.FC = () => {
   const [currentSection, setCurrentSection] = useState('contractList');
+  const [selectedContract, setSelectedContract] = useState<any | null>(null);
   const [account, setAccount] = useState<string | null>(null);
   const [sidebarWidth, setSidebarWidth] = useState(200); // начальная ширина сайдбара
   const [isDragging, setIsDragging] = useState(false);
@@ -30,6 +32,16 @@ const App: React.FC = () => {
     setIsDragging(false);
   };
 
+  const handleSelectContract = (contract: any) => {
+    setSelectedContract(contract);
+    setCurrentSection('contractDetails');
+  };
+
+  const handleBackToList = () => {
+    setSelectedContract(null);
+    setCurrentSection('contractList');
+  };
+
   return (
     <div
       className="app-container"
@@ -44,7 +56,10 @@ const App: React.FC = () => {
       <div className="content">
         {account ? (
           <>
-            {currentSection === 'contractList' && <ContractList />}
+            {currentSection === 'contractList' && <ContractList onSelectContract={handleSelectContract} />}
+            {currentSection === 'contractDetails' && selectedContract && (
+              <ContractDetails contract={selectedContract} onBack={handleBackToList} />
+            )}
             {currentSection === 'createHook' && <CreateHook />}
             {currentSection === 'nextStep' && <NextStep />}
           </>
