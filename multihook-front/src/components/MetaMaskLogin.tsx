@@ -1,25 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import WalletModal from './WalletModal';
 import '../styles/metaMaskLogin.css';
-
-declare global {
-  interface Window {
-    ethereum: any;
-  }
-}
 
 interface MetaMaskLoginProps {
   onLogin: (account: string) => void;
 }
 
 const MetaMaskLogin: React.FC<MetaMaskLoginProps> = ({ onLogin }) => {
-  const [account, setAccount] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const connectWallet = async () => {
+  const connectMetaMask = async () => {
     if (window.ethereum) {
       try {
         const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-        setAccount(accounts[0]);
-        onLogin(accounts[0]);  // Сообщаем родительскому компоненту об успешной авторизации
+        onLogin(accounts[0]);
+        setIsModalOpen(false);  // Закрываем модалку после успешного подключения
       } catch (error) {
         console.error("Failed to connect to MetaMask", error);
       }
@@ -28,25 +23,24 @@ const MetaMaskLogin: React.FC<MetaMaskLoginProps> = ({ onLogin }) => {
     }
   };
 
-  useEffect(() => {
-    const checkAccount = async () => {
-      if (window.ethereum && !account) {
-        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-        if (accounts.length > 0) {
-          setAccount(accounts[0]);
-          onLogin(accounts[0]);  // Сообщаем родительскому компоненту, что уже авторизованы
-        }
-      }
-    };
-
-    checkAccount();
-  }, [account, onLogin]);
+  const connectWalletConnect = () => {
+    // Здесь будет логика подключения через WalletConnect
+    alert("WalletConnect is not yet implemented.");
+    setIsModalOpen(false);  // Закрываем модалку после попытки подключения
+  };
 
   return (
     <div className="metaMask-login">
-      <button className="connect-wallet-btn" onClick={connectWallet}>
-        Подключить MetaMask
+      <button className="connect-wallet-btn" onClick={() => setIsModalOpen(true)}>
+        Connect Wallet
       </button>
+      {isModalOpen && (
+        <WalletModal
+          onClose={() => setIsModalOpen(false)}
+          onConnectMetaMask={connectMetaMask}
+          onConnectWalletConnect={connectWalletConnect}
+        />
+      )}
     </div>
   );
 };
