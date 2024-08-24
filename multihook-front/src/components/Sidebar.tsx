@@ -14,7 +14,7 @@ const Sidebar: React.FC<SidebarProps> = ({ setCurrentSection, width }) => {
     <div className="sidebar" style={{ width }}>
       <h2 style={{ fontSize: fontSize * 1.2 }}>Multihook</h2>
       <ul>
-        <li style={{ fontSize }} onClick={() => setCurrentSection('contractList')}>Hooks</li>
+        <li style={{ fontSize }} onClick={() => setCurrentSection('hookList')}>Hooks</li>
         <li style={{ fontSize }} onClick={() => setCurrentSection('createHook')}>Create hook</li>
         {/* <li onClick={() => setCurrentSection('nextStep')}>Следующий Шаг</li> */}
       </ul>

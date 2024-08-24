@@ -1,4 +1,4 @@
-.contract-list-container {
+.hook-list-container {
   padding: 20px;
   margin: 0 auto;
   max-width: 1200px;
@@ -9,7 +9,7 @@
 }
 
 .search-bar,
-.contract-filter {
+.hook-filter {
   width: 100%;
   position: sticky;
   top: 0;
@@ -28,13 +28,13 @@
   font-size: 1rem;
 }
 
-.contract-filter {
+.hook-filter {
   display: flex;
   justify-content: flex-start;
   gap: 10px;
 }
 
-.contract-filter select {
+.hook-filter select {
   padding: 10px;
   background-color: #1f1f2e;
   color: #ffffff;
@@ -43,7 +43,7 @@
   cursor: pointer;
 }
 
-.contract-list {
+.hook-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   gap: 20px;
@@ -54,35 +54,35 @@
 }
 
 /* Кастомизация полосы прокрутки */
-.contract-list::-webkit-scrollbar {
+.hook-list::-webkit-scrollbar {
   width: 12px; /* Ширина ползунка */
 }
 
-.contract-list::-webkit-scrollbar-track {
+.hook-list::-webkit-scrollbar-track {
   background: #1f1f2e; /* Цвет фона полосы прокрутки */
   border-radius: 10px; /* Закругленные углы */
 }
 
-.contract-list::-webkit-scrollbar-thumb {
+.hook-list::-webkit-scrollbar-thumb {
   background-color: #3579f6; /* Цвет ползунка */
   border-radius: 10px; /* Закругленные углы ползунка */
   border: 3px solid #1f1f2e; /* Внешний отступ между ползунком и его треком */
 }
 
-.contract-list::-webkit-scrollbar-thumb:hover {
+.hook-list::-webkit-scrollbar-thumb:hover {
   background-color: #2b66d9; /* Цвет ползунка при наведении */
 }
 
-.contract-list {
+.hook-list {
   scrollbar-width: thin;
   scrollbar-color: #3579f6 #1f1f2e;
 }
 
-.contract-list:hover {
+.hook-list:hover {
   scrollbar-color: #2b66d9 #1f1f2e;
 }
 
-.contract-card {
+.hook-card {
   background: linear-gradient(to bottom, #2b2d42, #1f1f2e);
   padding: 20px;
   border-radius: 10px;
@@ -94,28 +94,28 @@
   box-sizing: border-box; /* Учитывает padding при расчете размеров */
 }
 
-.contract-card:hover {
+.hook-card:hover {
   transform: translateY(-5px);
   box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.6);
 }
 
-.contract-card h3 {
+.hook-card h3 {
   margin: 0;
   font-size: 1.25rem;
   color: #ffffff;
 }
 
-.contract-card p {
+.hook-card p {
   margin: 5px 0;
   color: #b0b3c2;
 }
 
-.contract-card .contract-address {
+.hook-card .hook-address {
   font-family: monospace;
   color: #ff8e3c;
 }
 
-.contract-card .contract-date {
+.hook-card .hook-date {
   color: #888fa7;
   font-size: 0.85rem;
 }
