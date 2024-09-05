@@ -1,8 +1,23 @@
+:root {
+  --primary-color: #3579f6;
+  --secondary-color: #2b66d9;
+  --accent-color: #ff8e3c;
+  --background-color: #1f1f2e;
+  --sidebar-background: #203a43;
+  --sidebar-border: #3a3d55;
+  --text-color: #ffffff;
+  --muted-text-color: #b0b3c2;
+  --hover-color: #ff7c2a;
+  --input-background: #1f1f2e;
+  --input-border: #3a3d55;
+  --input-focus-border: #3579f6;
+}
+
 body {
   margin: 0;
   font-family: 'Inter', sans-serif;
-  background: linear-gradient(to bottom, #3a8ec3, #1f1f2e);
-  color: #fff;
+  background: linear-gradient(to bottom, #3a8ec3, var(--background-color));
+  color: var(--text-color);
 }
 
 * {

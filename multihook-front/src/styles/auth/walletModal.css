@@ -31,6 +31,11 @@
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
   position: relative;
   z-index: 1001;
+  transition: transform 0.3s;
+}
+
+.modal-content:hover {
+  transform: translateY(-5px);
 }
 
 .modal-header {
@@ -42,13 +47,13 @@
 .modal-header h2 {
   margin: 0;
   font-size: 1.5rem;
-  color: #fff;
+  color: var(--text-color);
 }
 
 .close-btn {
   background: none;
   border: none;
-  color: #fff;
+  color: var(--text-color);
   font-size: 1.5rem;
   cursor: pointer;
 }
@@ -62,10 +67,10 @@
 
 .wallet-btn {
   background-color: #2c3e50;
-  color: #fff;
   border: none;
-  padding: 10px;
   border-radius: 5px;
+  color: var(--text-color);
+  padding: 10px;
   display: flex;
   align-items: center;
   justify-content: center;

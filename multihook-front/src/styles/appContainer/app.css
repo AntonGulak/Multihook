@@ -1,47 +1,6 @@
-body {
-  margin: 0;
-  font-family: 'Inter', sans-serif;
-  background: linear-gradient(to bottom, #3a8ec3, #1f1f2e);
-  color: #fff;
-}
-
 .app-container {
   display: flex;
   height: 100vh;
-}
-
-.sidebar {
-  width: 220px; /* Уменьшена ширина по требованию */
-  background: linear-gradient(to bottom, #203a43, #0f2027);
-  padding: 20px;
-  border-right: 1px solid #3a3d55;
-  box-shadow: 2px 0px 10px rgba(0, 0, 0, 0.5);
-}
-
-.sidebar h2 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #ffffff;
-  margin-bottom: 30px;
-}
-
-.sidebar ul {
-  list-style-type: none;
-  padding: 0;
-}
-
-.sidebar ul li {
-  margin-bottom: 20px;
-  font-size: 1rem;
-  font-weight: 500;
-  color: #b0b3c2;
-  cursor: pointer;
-  transition: color 0.3s, transform 0.3s;
-}
-
-.sidebar ul li:hover {
-  color: #ffffff;
-  transform: translateX(10px);
 }
 
 .content {
@@ -58,19 +17,23 @@ body {
   padding: 10px 0;
 }
 
-.connect-wallet-btn {
-  background-color: #ff8e3c;
-  color: white;
+.connect-wallet-btn,
+.submit-btn,
+.wallet-btn {
+  background-color: var(--accent-color);
   border: none;
-  padding: 10px 20px;
   border-radius: 10px;
-  font-weight: 600;
+  color: white;
   cursor: pointer;
   transition: background-color 0.3s, transform 0.3s;
+  font-weight: 600;
+  padding: 15px 30px;
 }
 
-.connect-wallet-btn:hover {
-  background-color: #ff7c2a;
+.connect-wallet-btn:hover,
+.submit-btn:hover,
+.wallet-btn:hover {
+  background-color: var(--hover-color);
   transform: scale(1.05);
 }
 
@@ -80,7 +43,7 @@ body {
   border-radius: 10px;
   font-size: 1rem;
   font-weight: 500;
-  color: #ffffff;
+  color: var(--text-color);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -103,7 +66,7 @@ body {
 }
 
 .main-btn {
-  background-color: #3579f6;
+  background-color: var(--primary-color);
   color: white;
   border: none;
   padding: 15px 30px;
@@ -115,6 +78,6 @@ body {
 }
 
 .main-btn:hover {
-  background-color: #2b66d9;
+  background-color: var(--secondary-color);
   transform: scale(1.05);
 }

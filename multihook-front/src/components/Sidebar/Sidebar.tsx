@@ -7,11 +7,11 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ setCurrentSection, width }) => {
-  const fontSize = Math.max(14, width * 0.08);
+  const fontSize = Math.max(14, width * 0.09);
 
   return (
     <div className="sidebar" style={{ width }}>
-      <h2 style={{ fontSize: fontSize * 1.2 }}>Multihook</h2>
+      <h2 style={{ fontSize: fontSize * 1.5 }}>Multihook</h2>
       <ul>
         <li style={{ fontSize }} onClick={() => setCurrentSection('hookList')}>Hooks</li>
         <li style={{ fontSize }} onClick={() => setCurrentSection('createHook')}>Create hook</li>

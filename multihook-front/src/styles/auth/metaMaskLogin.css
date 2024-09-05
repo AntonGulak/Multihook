@@ -6,17 +6,16 @@
 }
 
 .connect-wallet-btn {
-  background-color: #ff8e3c;
-  color: white;
+  background-color: var(--accent-color);
   border: none;
-  padding: 15px 30px;
   border-radius: 10px;
-  font-weight: 600;
+  color: white;
   cursor: pointer;
   transition: background-color 0.3s, transform 0.3s;
+  padding: 15px 30px;
 }
 
 .connect-wallet-btn:hover {
-  background-color: #ff7c2a;
+  background-color: var(--hover-color);
   transform: scale(1.05);
 }

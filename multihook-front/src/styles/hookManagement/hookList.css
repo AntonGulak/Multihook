@@ -3,9 +3,10 @@
   margin: 0 auto;
   max-width: 1200px;
   width: 100%;
-  height: calc(100vh - 60px); /* Фиксированная высота контейнера */
+  height: calc(100vh - 60px);
   display: flex;
   flex-direction: column;
+  overflow: hidden; /* Добавлено, чтобы избежать выхода контента за пределы контейнера */
 }
 
 .search-bar,
@@ -23,75 +24,160 @@
   padding: 12px;
   border-radius: 10px;
   border: none;
-  background-color: #1f1f2e;
-  color: #ffffff;
+  background-color: var(--input-background);
+  color: var(--text-color);
   font-size: 1rem;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
 }
 
 .hook-filter {
   display: flex;
   justify-content: flex-start;
-  gap: 10px;
+  align-items: center;
+  gap: 20px;
 }
 
-.hook-filter select {
-  padding: 10px;
-  background-color: #1f1f2e;
-  color: #ffffff;
+/* Стили для кнопки сортировки */
+.sort-select {
+  padding: 10px 15px;
+  font-size: 1.125rem;
+  background-color: var(--input-background);
+  color: var(--text-color);
   border: none;
   border-radius: 5px;
   cursor: pointer;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+  min-width: 250px;
+  height: 45px;
 }
 
+/* Dropdown style */
+.dropdown {
+  position: relative;
+}
+
+.dropdown-button {
+  padding: 10px 15px;
+  font-size: 1.125rem;
+  background-color: var(--input-background);
+  color: var(--text-color);
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+  min-width: 250px;
+  height: 45px;
+}
+
+.dropdown-arrow {
+  margin-left: auto;
+}
+
+.dropdown-content {
+  display: block;
+  position: absolute;
+  background-color: var(--input-background);
+  min-width: 250px;
+  box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
+  border-radius: 5px;
+  z-index: 1;
+  margin-top: 5px;
+}
+
+.dropdown-item {
+  padding: 10px 15px;
+  font-size: 1.125rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.dropdown-item.selected {
+  background-color: var(--primary-color);
+  color: white;
+  animation: selected-ping 0.5s ease-out;
+}
+
+@keyframes selected-ping {
+  0% {
+    box-shadow: 0 0 0 0 var(--primary-color);
+  }
+  100% {
+    box-shadow: 0 0 10px 5px rgba(0, 0, 0, 0);
+  }
+}
+
+.dropdown-item:hover {
+  background-color: var(--hover-background);
+  color: var(--text-color);
+}
+
+.dropdown-item.selected:hover {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+/* Стили для кнопки сброса */
+.reset-button {
+  padding: 10px 15px;
+  font-size: 1.125rem;
+  background-color: var(--input-background);
+  color: var(--text-color);
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.3s ease;
+  height: 45px;
+}
+
+.reset-button:hover {
+  background-color: var(--hover-background);
+}
+
+/* Общие стили списка и карточек */
 .hook-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); /* Увеличена минимальная ширина колонки */
   gap: 20px;
   overflow-y: auto;
   flex-grow: 1;
   padding-top: 10px;
-  padding-right: 15px; /* Добавлен отступ справа для смещения ползунка */
+  padding-right: 15px;
 }
 
 /* Кастомизация полосы прокрутки */
 .hook-list::-webkit-scrollbar {
-  width: 12px; /* Ширина ползунка */
+  width: 12px;
 }
 
 .hook-list::-webkit-scrollbar-track {
-  background: #1f1f2e; /* Цвет фона полосы прокрутки */
-  border-radius: 10px; /* Закругленные углы */
+  background: var(--input-background);
+  border-radius: 10px;
 }
 
 .hook-list::-webkit-scrollbar-thumb {
-  background-color: #3579f6; /* Цвет ползунка */
-  border-radius: 10px; /* Закругленные углы ползунка */
-  border: 3px solid #1f1f2e; /* Внешний отступ между ползунком и его треком */
+  background-color: var(--primary-color);
+  border-radius: 10px;
+  border: 3px solid var(--input-background);
 }
 
 .hook-list::-webkit-scrollbar-thumb:hover {
-  background-color: #2b66d9; /* Цвет ползунка при наведении */
-}
-
-.hook-list {
-  scrollbar-width: thin;
-  scrollbar-color: #3579f6 #1f1f2e;
-}
-
-.hook-list:hover {
-  scrollbar-color: #2b66d9 #1f1f2e;
+  background-color: var(--secondary-color);
 }
 
 .hook-card {
-  background: linear-gradient(to bottom, #2b2d42, #1f1f2e);
+  background: linear-gradient(to bottom, #2b2d42, var(--background-color));
   padding: 20px;
   border-radius: 10px;
   cursor: pointer;
   transition: transform 0.3s, box-shadow 0.3s;
   box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.4);
-  height: 200px; /* Фиксированная высота карточки */
-  width: 100%; /* Ширина карточки соответствует ширине колонки */
-  box-sizing: border-box; /* Учитывает padding при расчете размеров */
+  height: 200px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .hook-card:hover {
@@ -102,20 +188,90 @@
 .hook-card h3 {
   margin: 0;
   font-size: 1.25rem;
-  color: #ffffff;
+  color: var(--text-color);
 }
 
 .hook-card p {
   margin: 5px 0;
-  color: #b0b3c2;
+  color: var(--muted-text-color);
 }
 
 .hook-card .hook-address {
   font-family: monospace;
-  color: #ff8e3c;
+  color: var(--accent-color);
 }
 
 .hook-card .hook-date {
   color: #888fa7;
   font-size: 0.85rem;
+}
+
+/* Адаптивные стили */
+@media (max-width: 768px) {
+  .hook-list-container {
+    padding: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .hook-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Стили для загрузочных плейсхолдеров */
+.hook-card.loading-placeholder {
+  background: linear-gradient(to bottom, #2b2d42, var(--background-color));
+  height: 200px;
+  border-radius: 10px;
+  position: relative;
+  overflow: hidden;
+}
+
+.hook-card.loading-placeholder::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.1);
+  filter: blur(8px);
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.hook-card.loading-placeholder::after {
+  content: '';
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  width: 40%;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 5px;
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+  }
 }

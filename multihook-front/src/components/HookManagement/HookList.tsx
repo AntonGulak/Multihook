@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import HookCard from './HookCard';
 import { mockHooks } from '../../hooksMock';
 
@@ -18,35 +18,75 @@ interface HookListProps {
 
 const HookList: React.FC<HookListProps> = ({ onSelectHook }) => {
   const [hooks, setHooks] = useState<Hook[]>([]);
-  const [filter, setFilter] = useState<string>('All');
+  const [selectedNetworks, setSelectedNetworks] = useState<string[]>([]);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setHooks(mockHooks);
+    // Имитация загрузки данных
+    setTimeout(() => {
+      setHooks(mockHooks);
+      setIsLoading(false);
+    }, 2000); // Задержка для имитации загрузки
   }, []);
+
+  const uniqueNetworks = useMemo(() => {
+    return Array.from(new Set(hooks.map(hook => hook.network)));
+  }, [hooks]);
 
   const filteredHooks = useMemo(() => {
     return hooks
       .filter(hook => 
-        (filter === 'All' || hook.network === filter) &&
+        (selectedNetworks.length === 0 || selectedNetworks.includes(hook.network)) &&
         (hook.name.toLowerCase().includes(searchQuery.toLowerCase()) || hook.address.toLowerCase().includes(searchQuery.toLowerCase()))
       )
       .sort((a, b) => sortOrder === 'asc'
         ? new Date(a.creationDate).getTime() - new Date(b.creationDate).getTime()
         : new Date(b.creationDate).getTime() - new Date(a.creationDate).getTime());
-  }, [hooks, filter, sortOrder, searchQuery]);
+  }, [hooks, selectedNetworks, sortOrder, searchQuery]);
 
-  const handleFilterChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
-    setFilter(e.target.value);
+  const toggleNetworkSelection = useCallback((network: string) => {
+    setSelectedNetworks(prevNetworks =>
+      prevNetworks.includes(network)
+        ? prevNetworks.filter(n => n !== network)
+        : [...prevNetworks, network]
+    );
   }, []);
 
   const handleSortOrderChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
     setSortOrder(e.target.value as 'asc' | 'desc');
+    setIsDropdownOpen(false);
   }, []);
 
   const handleSearchQueryChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
+  }, []);
+
+  const toggleDropdown = useCallback(() => {
+    setIsDropdownOpen(prevState => !prevState);
+  }, []);
+
+  const handleClickOutside = useCallback((event: MouseEvent) => {
+    if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      setIsDropdownOpen(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [handleClickOutside]);
+
+  const resetFilters = useCallback(() => {
+    setSelectedNetworks([]);
+    setSortOrder('desc');
+    setSearchQuery('');
+    setIsDropdownOpen(false);
   }, []);
 
   return (
@@ -60,25 +100,46 @@ const HookList: React.FC<HookListProps> = ({ onSelectHook }) => {
         />
       </div>
       <div className="hook-filter">
-        <select onChange={handleFilterChange} value={filter}>
-          <option value="All">All Networks</option>
-          <option value="Ethereum">Ethereum</option>
-          <option value="Binance Smart Chain">Binance Smart Chain</option>
-          <option value="Polygon">Polygon</option>
-        </select>
-        <select onChange={handleSortOrderChange} value={sortOrder}>
+        <select onChange={handleSortOrderChange} value={sortOrder} className="sort-select">
           <option value="asc">Sort by Date (Asc)</option>
           <option value="desc">Sort by Date (Desc)</option>
         </select>
+        <div className="dropdown" ref={dropdownRef}>
+          <button className="dropdown-button" onClick={toggleDropdown}>
+            Select Networks
+            <span className="dropdown-arrow">&#9660;</span>
+          </button>
+          {isDropdownOpen && (
+            <div className="dropdown-content">
+              {uniqueNetworks.map(network => (
+                <div
+                  key={network}
+                  className={`dropdown-item ${selectedNetworks.includes(network) ? 'selected' : ''}`}
+                  onClick={() => toggleNetworkSelection(network)}
+                >
+                  {network}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <button className="reset-button" onClick={resetFilters}>Reset</button>
       </div>
       <div className="hook-list">
-        {filteredHooks.map(hook => (
-          <HookCard 
-            key={hook.id} 
-            hook={hook} 
-            onClick={() => onSelectHook(hook)} 
-          />
-        ))}
+        {isLoading ? (
+          // Заглушки при загрузке
+          Array(9).fill(0).map((_, index) => (
+            <div key={index} className="hook-card loading-placeholder" />
+          ))
+        ) : (
+          filteredHooks.map(hook => (
+            <HookCard 
+              key={hook.id} 
+              hook={hook} 
+              onClick={() => onSelectHook(hook)} 
+            />
+          ))
+        )}
       </div>
     </div>
   );
