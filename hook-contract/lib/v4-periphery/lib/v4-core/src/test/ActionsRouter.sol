@@ -9,7 +9,7 @@ import {PoolKey} from "../types/PoolKey.sol";
 import {MockERC20} from "solmate/src/test/utils/mocks/MockERC20.sol";
 import {StateLibrary} from "../libraries/StateLibrary.sol";
 import {TransientStateLibrary} from "../libraries/TransientStateLibrary.sol";
-import {GasSnapshot} from "forge-gas-snapshot/GasSnapshot.sol";
+// import {GasSnapshot} from "forge-gas-snapshot/GasSnapshot.sol";
 
 // Supported Actions.
 enum Actions {
@@ -35,7 +35,7 @@ enum Actions {
 
 /// @notice A router that handles an arbitrary input of actions.
 /// TODO: Can continue to add functions per action.
-contract ActionsRouter is IUnlockCallback, Test, GasSnapshot {
+contract ActionsRouter is IUnlockCallback, Test {
     using StateLibrary for IPoolManager;
     using TransientStateLibrary for IPoolManager;
 
@@ -132,7 +132,7 @@ contract ActionsRouter is IUnlockCallback, Test, GasSnapshot {
             abi.decode(params, (Currency, uint256, bool, string));
 
         manager.clear(currency, amount);
-        if (measureGas) snapLastCall(gasSnapName);
+        // if (measureGas) snapLastCall(gasSnapName);
     }
 
     function _assertBalanceEquals(bytes memory params) internal view {

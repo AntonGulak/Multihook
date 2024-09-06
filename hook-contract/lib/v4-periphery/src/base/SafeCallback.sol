@@ -16,7 +16,7 @@ abstract contract SafeCallback is ImmutableState, IUnlockCallback {
     }
 
     /// @dev We force the onlyByPoolManager modifier by exposing a virtual function after the onlyByPoolManager check.
-    function unlockCallback(bytes calldata data) external onlyByPoolManager returns (bytes memory) {
+    function unlockCallback(bytes calldata data) external virtual onlyByPoolManager returns (bytes memory) {
         return _unlockCallback(data);
     }
 
