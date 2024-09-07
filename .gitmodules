@@ -1,0 +1,6 @@
+[submodule "hook-contract/lib/openzeppelin-contracts"]
+	path = hook-contract/lib/openzeppelin-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts.git
+[submodule "hook-contract/lib/gas-price-hook"]
+	path = hook-contract/lib/gas-price-hook
+	url = https://github.com/haardikk21/gas-price-hook.git

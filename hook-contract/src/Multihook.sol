@@ -14,19 +14,37 @@ import {IHooks} from "@uniswap/v4-core/src/interfaces/IHooks.sol";
 import {BeforeSwapDelta, toBeforeSwapDelta, BeforeSwapDeltaLibrary} from "v4-core/types/BeforeSwapDelta.sol";
 import {BaseHook, BalanceDelta} from "v4-periphery/src/base/hooks/BaseHook.sol";
 
-import {HookLib, Hook} from "./HookLib.sol";
+import {HookLib, Hook, HookPacked} from "./HookLib.sol";
+
+import {Ownable2Step, Ownable} from "@openzeppelin/contracts/access/Ownable2Step.sol";
+
+import "forge-std/console.sol";
 
 //hooks sload to tload !!! TODO:
 //fallback ==> poolmanager proxy
 
-contract Multihook is BaseHook {
+
+//TODO:
+interface IUnlockCallback {
+    function unlockCallback(bytes calldata data) external returns (bytes memory);
+}
+
+
+error MaxHooksCountExceeded();
+error ZeroAddress();
+
+contract Multihook is BaseHook, Ownable2Step {
     using CurrencySettler for Currency;
     using HookLib for Hook[];
-    
+
+    uint8 public constant MAX_HOOKS_COUNT = 25;
+
     Hook[] public hooks;
-    mapping(IHooks => bool) public isHook;
+    Hook[] public pendingHooks;
     
-    constructor(IPoolManager poolManager) BaseHook(poolManager) {}
+    constructor(IPoolManager poolManager, Hook[] memory initHooks, address manager) BaseHook(poolManager) Ownable(manager) {
+       _setHooks(initHooks, hooks);
+    }
 
     function getHookPermissions()
         public
@@ -71,8 +89,8 @@ contract Multihook is BaseHook {
         int24 tick,
         bytes calldata hookData
     ) external override returns (bytes4) {
-        Hook[] memory hooksMem = hooks;
-        hooksMem.executeAfterInitialize(sender, key, sqrtPriceX96, tick, hookData);
+        // Hook[] memory hooksMem = hooks;
+        // hooksMem.executeAfterInitialize(sender, key, sqrtPriceX96, tick, hookData);
         return BaseHook.afterInitialize.selector;
     }
 
@@ -133,8 +151,9 @@ contract Multihook is BaseHook {
         IPoolManager.SwapParams calldata params,
         bytes calldata hookData
     ) external override returns (bytes4, BeforeSwapDelta, uint24) {
-        uint24 fee;
-        return (BaseHook.beforeSwap.selector, BeforeSwapDeltaLibrary.ZERO_DELTA, fee);
+        Hook[] memory hooksMem = hooks;
+        (BeforeSwapDelta delta, uint24 fee) = hooksMem.executeBeforeSwap(sender, key, params, hookData);
+        return (BaseHook.beforeSwap.selector, delta, fee);
     }
 
     function afterSwap(
@@ -144,10 +163,9 @@ contract Multihook is BaseHook {
         BalanceDelta delta, 
         bytes calldata hookData
     ) external override returns (bytes4, int128) {
-        //hookDeltaUnspecified -->Delta
-        int128 hookDeltaUnspecified;
-
-        return (BaseHook.afterSwap.selector, hookDeltaUnspecified);
+        Hook[] memory hooksMem = hooks;
+        int128 deltaUnspecified = hooksMem.executeAfterSwap(sender, key, params, delta, hookData);
+        return (BaseHook.beforeSwap.selector, deltaUnspecified);
     }
 
     function beforeDonate(
@@ -180,36 +198,69 @@ contract Multihook is BaseHook {
 
     //rewrite SafeCallback
     function unlockCallback(bytes calldata data) external onlyByPoolManager override returns (bytes memory) {
-        //прочитать из tsload какой хук ушёл в анлок коллбэк и вызвать его unlockCallback
-        return "";
+        IUnlockCallback hook = IUnlockCallback(HookLib.tloadPool());
+        return hook.unlockCallback(data);
     }
 
     fallback() external {
-        //прочитать из tsload какой хук был вызван и работать только лишь с ним
-        if (isHook[IHooks(msg.sender)]) {
+        if (msg.sender == HookLib.tloadPool()) {
            _callOptionalReturn(address(poolManager), msg.data);
         } else {
             revert("fallback"); //TODO
         }
     }
 
-    function _callOptionalReturn(address callTo, bytes memory data) private {
-        uint256 returnSize;
-        uint256 returnValue;
-        assembly ("memory-safe") {
-            let success := call(gas(), callTo, 0, add(data, 0x20), mload(data), 0, 0x20)
-            if iszero(success) {
-                let ptr := mload(0x40)
-                returndatacopy(ptr, 0, returndatasize())
-                revert(ptr, returndatasize())
-            }
-            returnSize := returndatasize()
-            returnValue := mload(0)
+    function changeHooks(Hook[] memory updatedHooks) external onlyOwner {
+        _setHooks(updatedHooks, pendingHooks);
+        //TODO: Timer
+    }
+
+    function acceptNewHooks() external onlyOwner {
+        hooks = pendingHooks;
+        delete pendingHooks;
+        //TODO: Timer
+    }
+
+    function rejectNewHooks() external onlyOwner {
+        delete pendingHooks;
+    }
+    
+    function _setHooks(Hook[] memory initHooks, Hook[] storage shooks) private {
+         if (initHooks.length > MAX_HOOKS_COUNT) {
+            revert MaxHooksCountExceeded();
         }
 
-        //TODO:
-        // if (returnSize == 0 ? address(callTo).code.length == 0 : returnValue != 1) {
-        //     revert
-        // }
+        //TODO: validate flags
+        for (uint256 i = 0; i < initHooks.length; ++i) {
+            if (initHooks[i].hookAddress == address(0)) {
+                revert ZeroAddress();
+            }
+
+            shooks.push(initHooks[i]);
+        }
     }
+
+    function _callOptionalReturn(address callTo, bytes memory data) private {
+        //TODO: FUNCTIONS WITHOUT RETURN DATA
+        assembly ("memory-safe") {
+            let success := call(gas(), callTo, 0, add(data, 0x20), mload(data), 0, 0x20)
+
+            // Copy the returned data.
+            // returndatacopy(t, f, s) - copy s bytes from returndata at position f to mem at position t
+            // returndatasize() - size of the last returndata
+            returndatacopy(0, 0, returndatasize())
+
+            switch success
+            // delegatecall returns 0 on error.
+            case 0 {
+                // revert(p, s) - end execution, revert state changes, return data mem[p…(p+s))
+                revert(0, returndatasize())
+            }
+            default {
+                // return(p, s) - end execution, return data mem[p…(p+s))
+                return(0, returndatasize())
+            }
+        }
+    }
+
 }
