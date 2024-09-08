@@ -16,6 +16,7 @@ import {IERC20Minimal} from "v4-core/interfaces/external/IERC20Minimal.sol";
 import {LPFeeLibrary} from "v4-core/libraries/LPFeeLibrary.sol";
 
 import {GasPriceFeesHook} from "gas-price-hook/src/GasPriceFeesHook.sol";
+import {PoolSwapTest} from "v4-core/test/PoolSwapTest.sol";
 
 contract MultihookTest is Test, Deployers {
     using PoolIdLibrary for PoolId;
@@ -36,10 +37,12 @@ contract MultihookTest is Test, Deployers {
 
         setUpTestGasPriceFeesHook(multiHookAddress);
 
-        Hook[] memory initHooks = new Hook[](1);
-        initHooks[0] = Hook(address(gasPriceHook));
+        uint256 activatedHooks = 150650441649280338332058946156983994099793434342399370330112;
 
-        deployCodeTo("src/Multihook.sol:Multihook", abi.encode(manager, initHooks, address(this)), multiHookAddress);
+        Hook[] memory initHooks = new Hook[](1);
+        initHooks[0] = Hook(address(gasPriceHook), 0);
+
+        deployCodeTo("src/Multihook.sol:Multihook", abi.encode(manager, initHooks, activatedHooks, address(this)), multiHookAddress);
         hook = Multihook(multiHookAddress);
 
         vm.txGasPrice(10 gwei);
@@ -51,10 +54,31 @@ contract MultihookTest is Test, Deployers {
             SQRT_PRICE_1_1,
             ZERO_BYTES
         );
+
+        // (uint24 hooks_counts, uint24 hooks_flags) = hook.getActivatedHooks(786191, hook.AFTER_DONATE_HOOK_FLAGS(), 0);
+
+        // console.log(hooks_counts);
+        // console.log(hooks_flags);
+        
+        // (hooks_counts, hooks_flags) = hook.getActivatedHooks(824381014016, hook.BEFORE_DONATE_HOOK_FLAGS(), 20);
+
+        // console.log(hooks_counts);
+        // console.log(hooks_flags);
     }
 
-    function test_withGasPriceHook() public view {
+    function test_feeUpdatesWithGasPrice() public {
+        PoolSwapTest.TestSettings memory testSettings = PoolSwapTest
+            .TestSettings({takeClaims: false, settleUsingBurn: false});
+
+        IPoolManager.SwapParams memory params = IPoolManager.SwapParams({
+            zeroForOne: true,
+            amountSpecified: -0.00001 ether,
+            sqrtPriceLimitX96: TickMath.MIN_SQRT_PRICE + 1
+        });
+
+        swapRouter.swap(key, params, testSettings, ZERO_BYTES);
     }
+
 
     //!!!!!!!!
     function setUpTestGasPriceFeesHook(address multiHookAddress) internal {

@@ -21,6 +21,7 @@ import "forge-std/console.sol";
 
 struct Hook {
     address hookAddress;
+    uint96 hookQueue;
 }
 
 struct HookPacked {
@@ -55,6 +56,7 @@ library HookLib {
         bytes calldata hookData
     ) internal {
         for (uint256 i = 0; i < hooks.length; ++i) {
+            tstoreActivePool(hooks[i].hookAddress);
             IHooks(hooks[i].hookAddress).afterInitialize(sender, key, sqrtPriceX96, tick, hookData);
         }
     }
@@ -67,6 +69,7 @@ library HookLib {
         bytes calldata hookData
     ) internal {
         for (uint256 i = 0; i < hooks.length; ++i) {
+            tstoreActivePool(hooks[i].hookAddress);
             IHooks(hooks[i].hookAddress).beforeAddLiquidity(sender, key, params, hookData);
         }
     }
@@ -79,6 +82,7 @@ library HookLib {
         bytes calldata hookData
     ) internal {
         for (uint256 i = 0; i < hooks.length; ++i) {
+            tstoreActivePool(hooks[i].hookAddress);
             IHooks(hooks[i].hookAddress).beforeRemoveLiquidity(sender, key, params, hookData);
         }
     }
@@ -92,6 +96,7 @@ library HookLib {
         bytes calldata hookData
     ) internal returns(BalanceDelta) {
         for (uint256 i = 0; i < hooks.length; ++i) {
+            tstoreActivePool(hooks[i].hookAddress);
             (, delta) = IHooks(hooks[i].hookAddress).afterAddLiquidity(sender, key, params, delta, hookData);
         }
 
@@ -107,6 +112,7 @@ library HookLib {
         bytes calldata hookData
     ) internal returns(BalanceDelta) {
         for (uint256 i = 0; i < hooks.length; ++i) {
+            tstoreActivePool(hooks[i].hookAddress);
             (, delta) = IHooks(hooks[i].hookAddress).afterRemoveLiquidity(sender, key, params, delta, hookData);
         }
 
@@ -124,7 +130,10 @@ library HookLib {
         int128 deltaUnspecified;
         uint24 fee;
         for (uint256 i = 0; i < hooks.length; ++i) {
+            tstoreActivePool(hooks[i].hookAddress);
+            console.log("executeBeforeSwap 1");
             (bytes4 selector, BeforeSwapDelta delta, uint24 lpFee) = IHooks(hooks[i].hookAddress).beforeSwap(sender, key, params, hookData);
+            console.log("executeBeforeSwap 2");
             deltaSpecified += delta.getSpecifiedDelta();
             deltaUnspecified += delta.getUnspecifiedDelta();
             fee = lpFee; //TODO
@@ -145,6 +154,7 @@ library HookLib {
         (int128 deltaSpecified, int128 deltaUnspecified) = getSpecifiedAndUnspecifiedCurrencies(delta, params.zeroForOne);
         
         for (uint256 i = 0; i < hooks.length; ++i) {
+            tstoreActivePool(hooks[i].hookAddress);
             bytes4 selector;
             (selector, deltaUnspecified) = IHooks(hooks[i].hookAddress).afterSwap(sender, key, params, delta, hookData);
             deltaUnspecified = deltaUnspecified;
@@ -163,6 +173,7 @@ library HookLib {
         bytes calldata hookData
     ) internal {
         for (uint256 i = 0; i < hooks.length; ++i) {
+            tstoreActivePool(hooks[i].hookAddress);
             IHooks(hooks[i].hookAddress).beforeDonate(sender, key, amount0, amount1, hookData); 
         }
     }
@@ -176,6 +187,7 @@ library HookLib {
         bytes calldata hookData
     ) internal {
         for (uint256 i = 0; i < hooks.length; ++i) {
+            tstoreActivePool(hooks[i].hookAddress);
             IHooks(hooks[i].hookAddress).afterDonate(sender, key, amount0, amount1, hookData); 
         }
     }

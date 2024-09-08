@@ -26,6 +26,9 @@ import {Extsload} from "./Extsload.sol";
 import {Exttload} from "./Exttload.sol";
 import {CustomRevert} from "./libraries/CustomRevert.sol";
 
+import "forge-std/console.sol";
+
+
 //  4
 //   44
 //     444
@@ -320,6 +323,7 @@ contract PoolManager is IPoolManager, ProtocolFees, NoDelegateCall, ERC6909Claim
 
     /// @inheritdoc IPoolManager
     function updateDynamicLPFee(PoolKey memory key, uint24 newDynamicLPFee) external {
+        console.log("updateDynamicLPFee");
         if (!key.fee.isDynamicFee() || msg.sender != address(key.hooks)) {
             UnauthorizedDynamicLPFeeUpdate.selector.revertWith();
         }

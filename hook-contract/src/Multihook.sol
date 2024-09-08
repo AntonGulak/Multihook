@@ -37,13 +37,57 @@ contract Multihook is BaseHook, Ownable2Step {
     using CurrencySettler for Currency;
     using HookLib for Hook[];
 
-    uint8 public constant MAX_HOOKS_COUNT = 25;
+    uint24 public constant HOOKS_COUNT_MASK = 0xF0000;
+    uint24 public constant HOOKS_BIT_MASK = 0x0FFFF;
+
+    uint8 public constant HOOKS_COUNT_MASK_SIZE = 4;
+    uint8 public constant HOOKS_BIT_MASK_SIZE = 16;
+
+    uint8 public constant BEFORE_INITIALIZE_BIT_SHIFT = (8 * HOOKS_COUNT_MASK_SIZE + 9 * HOOKS_BIT_MASK_SIZE) + HOOKS_COUNT_MASK_SIZE;
+    uint8 public constant AFTER_INITIALIZE_BIT_SHIFT= (7 * HOOKS_COUNT_MASK_SIZE + 8 * HOOKS_BIT_MASK_SIZE) + HOOKS_COUNT_MASK_SIZE; 
+
+    uint8 public constant BEFORE_ADD_LIQUIDITY_BIT_SHIFT = (6 * HOOKS_COUNT_MASK_SIZE + 7 * HOOKS_BIT_MASK_SIZE) + HOOKS_COUNT_MASK_SIZE; 
+    uint8 public constant AFTER_ADD_LIQUIDITY_BIT_SHIFT = (5 * HOOKS_COUNT_MASK_SIZE + 6 * HOOKS_BIT_MASK_SIZE) + HOOKS_COUNT_MASK_SIZE;
+
+    uint8 public constant BEFORE_REMOVE_LIQUIDITY_BIT_SHIFT = (4 * HOOKS_COUNT_MASK_SIZE + 5 * HOOKS_BIT_MASK_SIZE) + HOOKS_COUNT_MASK_SIZE;
+    uint8 public constant AFTER_REMOVE_LIQUIDITY_BIT_SHIFT = (3 * HOOKS_COUNT_MASK_SIZE + 4 * HOOKS_BIT_MASK_SIZE) + HOOKS_COUNT_MASK_SIZE;
+
+    uint8 public constant BEFORE_SWAP_BIT_SHIFT = (2 * HOOKS_COUNT_MASK_SIZE + 3 * HOOKS_BIT_MASK_SIZE) + HOOKS_COUNT_MASK_SIZE;
+    uint8 public constant AFTER_SWAP_BIT_SHIFT = (1 * HOOKS_COUNT_MASK_SIZE + 2 * HOOKS_BIT_MASK_SIZE) + HOOKS_COUNT_MASK_SIZE; 
+
+    uint8 public constant BEFORE_DONATE_BIT_SHIFT = (0 * HOOKS_COUNT_MASK_SIZE + 1 * HOOKS_BIT_MASK_SIZE) + HOOKS_COUNT_MASK_SIZE;
+    uint8 public constant AFTER_DONATE_BIT_SHIFT = 0;
+
+    //4 бит под количество битов, 16 бит отрезок под флаги активных хуков 
+    uint256 public constant BEFORE_INITIALIZE_HOOK_FLAGS = 0xFFFFF << BEFORE_INITIALIZE_BIT_SHIFT;
+    uint256 public constant AFTER_INITIALIZE_HOOK_FLAGS = 0xFFFFF << AFTER_INITIALIZE_BIT_SHIFT; 
+
+    uint256 public constant BEFORE_ADD_LIQUIDITY_HOOK_FLAGS = 0xFFFFF << BEFORE_ADD_LIQUIDITY_BIT_SHIFT; 
+    uint256 public constant AFTER_ADD_LIQUIDITY_HOOK_FLAGS = 0xFFFFF << AFTER_ADD_LIQUIDITY_BIT_SHIFT;
+
+    uint256 public constant BEFORE_REMOVE_LIQUIDITY_HOOK_FLAGS = 0xFFFFF << BEFORE_REMOVE_LIQUIDITY_BIT_SHIFT;
+    uint256 public constant AFTER_REMOVE_LIQUIDITY_HOOK_FLAGS = 0xFFFFF << AFTER_REMOVE_LIQUIDITY_BIT_SHIFT;
+
+    uint256 public constant BEFORE_SWAP_HOOK_FLAGS = 0xFFFFF << BEFORE_SWAP_BIT_SHIFT;
+    uint256 public constant AFTER_SWAP_HOOK_FLAGS = 0xFFFFF << AFTER_SWAP_BIT_SHIFT; 
+
+    uint256 public constant BEFORE_DONATE_HOOK_FLAGS = 0xFFFFF << BEFORE_DONATE_BIT_SHIFT;
+    uint256 public constant AFTER_DONATE_HOOK_FLAGS = 0xFFFFF << AFTER_DONATE_BIT_SHIFT;
+
+    uint8 public constant MAX_HOOKS_COUNT = HOOKS_BIT_MASK_SIZE;
+
+    uint256 public activatedHooks;
 
     Hook[] public hooks;
     Hook[] public pendingHooks;
     
-    constructor(IPoolManager poolManager, Hook[] memory initHooks, address manager) BaseHook(poolManager) Ownable(manager) {
-       _setHooks(initHooks, hooks);
+    constructor(
+        IPoolManager poolManager,
+        Hook[] memory initHooks,
+        uint256 initActivatedHooks,
+        address manager
+    ) BaseHook(poolManager) Ownable(manager) {
+       _setHooks(initHooks, hooks, initActivatedHooks);
     }
 
     function getHookPermissions()
@@ -77,7 +121,7 @@ contract Multihook is BaseHook, Ownable2Step {
         uint160 sqrtPriceX96,
         bytes calldata hookData
     ) external override returns (bytes4) {
-        Hook[] memory hooksMem = hooks;
+        Hook[] memory hooksMem = getActivatedHooks(activatedHooks, BEFORE_INITIALIZE_HOOK_FLAGS, BEFORE_INITIALIZE_BIT_SHIFT);
         hooksMem.executeBeforeInitialize(sender, key, sqrtPriceX96, hookData);
         return BaseHook.beforeInitialize.selector;
     }
@@ -89,8 +133,8 @@ contract Multihook is BaseHook, Ownable2Step {
         int24 tick,
         bytes calldata hookData
     ) external override returns (bytes4) {
-        // Hook[] memory hooksMem = hooks;
-        // hooksMem.executeAfterInitialize(sender, key, sqrtPriceX96, tick, hookData);
+        Hook[] memory hooksMem = getActivatedHooks(activatedHooks, AFTER_INITIALIZE_HOOK_FLAGS, AFTER_INITIALIZE_BIT_SHIFT);
+        hooksMem.executeAfterInitialize(sender, key, sqrtPriceX96, tick, hookData);
         return BaseHook.afterInitialize.selector;
     }
 
@@ -104,7 +148,7 @@ contract Multihook is BaseHook, Ownable2Step {
         override
         returns (bytes4)
     {
-        Hook[] memory hooksMem = hooks;
+        Hook[] memory hooksMem = getActivatedHooks(activatedHooks, BEFORE_ADD_LIQUIDITY_HOOK_FLAGS, BEFORE_ADD_LIQUIDITY_BIT_SHIFT);
         hooksMem.executeBeforeAddLiquidity(sender, key, params, hookData);
         return BaseHook.beforeAddLiquidity.selector;
     }
@@ -116,7 +160,7 @@ contract Multihook is BaseHook, Ownable2Step {
         IPoolManager.ModifyLiquidityParams calldata params,
         bytes calldata hookData
     ) external override returns (bytes4) {
-        Hook[] memory hooksMem = hooks;
+        Hook[] memory hooksMem = getActivatedHooks(activatedHooks, BEFORE_REMOVE_LIQUIDITY_HOOK_FLAGS, BEFORE_REMOVE_LIQUIDITY_BIT_SHIFT);
         hooksMem.executeBeforeRemoveLiquidity(sender, key, params, hookData);
         return BaseHook.beforeRemoveLiquidity.selector;
     }
@@ -128,7 +172,7 @@ contract Multihook is BaseHook, Ownable2Step {
         BalanceDelta delta,
         bytes calldata hookData
     ) external override returns (bytes4, BalanceDelta) {
-        Hook[] memory hooksMem = hooks;
+        Hook[] memory hooksMem = getActivatedHooks(activatedHooks, AFTER_ADD_LIQUIDITY_HOOK_FLAGS, AFTER_ADD_LIQUIDITY_BIT_SHIFT);
         delta = hooksMem.executeAfterAddLiquidity(sender, key, params, delta, hookData);
         return (BaseHook.afterAddLiquidity.selector, delta);
     }
@@ -140,7 +184,7 @@ contract Multihook is BaseHook, Ownable2Step {
         BalanceDelta delta,
         bytes calldata hookData
     ) external override returns (bytes4, BalanceDelta) {
-        Hook[] memory hooksMem = hooks;
+        Hook[] memory hooksMem = getActivatedHooks(activatedHooks, AFTER_REMOVE_LIQUIDITY_HOOK_FLAGS, AFTER_REMOVE_LIQUIDITY_BIT_SHIFT);
         delta = hooksMem.executeAfterAddLiquidity(sender, key, params, delta, hookData);
         return (BaseHook.afterRemoveLiquidity.selector, delta);
     }
@@ -151,7 +195,7 @@ contract Multihook is BaseHook, Ownable2Step {
         IPoolManager.SwapParams calldata params,
         bytes calldata hookData
     ) external override returns (bytes4, BeforeSwapDelta, uint24) {
-        Hook[] memory hooksMem = hooks;
+        Hook[] memory hooksMem = getActivatedHooks(activatedHooks, BEFORE_SWAP_HOOK_FLAGS, BEFORE_SWAP_BIT_SHIFT);
         (BeforeSwapDelta delta, uint24 fee) = hooksMem.executeBeforeSwap(sender, key, params, hookData);
         return (BaseHook.beforeSwap.selector, delta, fee);
     }
@@ -163,9 +207,9 @@ contract Multihook is BaseHook, Ownable2Step {
         BalanceDelta delta, 
         bytes calldata hookData
     ) external override returns (bytes4, int128) {
-        Hook[] memory hooksMem = hooks;
+        Hook[] memory hooksMem = getActivatedHooks(activatedHooks, AFTER_SWAP_HOOK_FLAGS, AFTER_SWAP_BIT_SHIFT);
         int128 deltaUnspecified = hooksMem.executeAfterSwap(sender, key, params, delta, hookData);
-        return (BaseHook.beforeSwap.selector, deltaUnspecified);
+        return (BaseHook.afterSwap.selector, deltaUnspecified);
     }
 
     function beforeDonate(
@@ -175,7 +219,7 @@ contract Multihook is BaseHook, Ownable2Step {
         uint256 amount1,
         bytes calldata hookData
     ) external override returns (bytes4) {
-        Hook[] memory hooksMem = hooks;
+        Hook[] memory hooksMem = getActivatedHooks(activatedHooks, BEFORE_DONATE_HOOK_FLAGS, BEFORE_DONATE_BIT_SHIFT);
         hooksMem.executeBeforeDonate(sender, key, amount0, amount1, hookData);
         return (BaseHook.beforeDonate.selector);
     }
@@ -191,7 +235,7 @@ contract Multihook is BaseHook, Ownable2Step {
         override
         returns (bytes4)
     {
-        Hook[] memory hooksMem = hooks;
+        Hook[] memory hooksMem = getActivatedHooks(activatedHooks, AFTER_DONATE_HOOK_FLAGS, AFTER_DONATE_BIT_SHIFT);
         hooksMem.executeAfterDonate(sender, key, amount0, amount1, hookData);
         return (BaseHook.afterDonate.selector);
     }
@@ -209,9 +253,31 @@ contract Multihook is BaseHook, Ownable2Step {
             revert("fallback"); //TODO
         }
     }
+    
+    //TODO: remove to lib
+    function getActivatedHooks(uint256 _activatedHooks, uint256 hookFlags, uint8 bitShift) public view returns (Hook[] memory) {
+        uint24 hook_info = uint24((_activatedHooks & hookFlags ) >> bitShift);
 
-    function changeHooks(Hook[] memory updatedHooks) external onlyOwner {
-        _setHooks(updatedHooks, pendingHooks);
+        uint24 hooks_counts = (hook_info & HOOKS_COUNT_MASK) >> HOOKS_BIT_MASK_SIZE;
+        uint16 hooks_flags = uint16(hook_info & HOOKS_BIT_MASK);
+
+        Hook[] memory selectedHooks = new Hook[](hooks_counts);
+        Hook[] memory hooksMem = hooks;
+
+        uint256 index;
+        //TODO check: for (uint8 i = 0; i < hooksMem.length; i++)
+        for (uint8 i = 0; i < 16; i++) {
+            if ((hooks_flags & (1 << (15 - i))) != 0) {
+                selectedHooks[index] = hooksMem[i];
+                index++;
+            }
+        }
+
+        return selectedHooks;
+    }
+
+    function changeHooks(Hook[] memory updatedHooks, uint256 updatedActivatedHooks) external onlyOwner {
+        _setHooks(updatedHooks, pendingHooks, updatedActivatedHooks);
         //TODO: Timer
     }
 
@@ -225,10 +291,12 @@ contract Multihook is BaseHook, Ownable2Step {
         delete pendingHooks;
     }
     
-    function _setHooks(Hook[] memory initHooks, Hook[] storage shooks) private {
+    function _setHooks(Hook[] memory initHooks, Hook[] storage shooks, uint256 initActivatedHooks) private {
          if (initHooks.length > MAX_HOOKS_COUNT) {
             revert MaxHooksCountExceeded();
         }
+
+        activatedHooks = initActivatedHooks;
 
         //TODO: validate flags
         for (uint256 i = 0; i < initHooks.length; ++i) {
@@ -241,7 +309,7 @@ contract Multihook is BaseHook, Ownable2Step {
     }
 
     function _callOptionalReturn(address callTo, bytes memory data) private {
-        //TODO: FUNCTIONS WITHOUT RETURN DATA
+        console.log("_callOptionalReturn");
         assembly ("memory-safe") {
             let success := call(gas(), callTo, 0, add(data, 0x20), mload(data), 0, 0x20)
 
