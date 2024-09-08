@@ -38,11 +38,12 @@ contract MultihookTest is Test, Deployers {
         setUpTestGasPriceFeesHook(multiHookAddress);
 
         uint256 activatedHooks = 150650441649280338332058946156983994099793434342399370330112;
+        uint256 timeout = 1 hours;
 
         Hook[] memory initHooks = new Hook[](1);
         initHooks[0] = Hook(address(gasPriceHook), 0);
 
-        deployCodeTo("src/Multihook.sol:Multihook", abi.encode(manager, initHooks, activatedHooks, address(this)), multiHookAddress);
+        deployCodeTo("src/Multihook.sol:Multihook", abi.encode(manager, initHooks, activatedHooks, address(this), timeout), multiHookAddress);
         hook = Multihook(multiHookAddress);
 
         vm.txGasPrice(10 gwei);
