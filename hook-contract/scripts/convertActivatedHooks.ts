@@ -95,7 +95,7 @@ function countActivatedHooks(hooksFlags: number): number {
       const { shift } = HOOKS_MASKS[hookName as keyof typeof HOOKS_MASKS];
   
       const currentInterval = (newActivatedHooks >> BigInt(shift)) & 0xFFFFFn;
-      const currentHooksCount = Number((currentInterval >> 16n) & 0xFn);
+      // const currentHooksCount = Number((currentInterval >> 16n) & 0xFn);
       let currentHooksFlags = Number(currentInterval & 0xFFFFn);
   
       const hookPosition = 15 - hookId;

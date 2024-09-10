@@ -2,6 +2,7 @@
 pragma solidity ^0.8.17;
 
 import {IPoolManager} from "v4-core/interfaces/IPoolManager.sol";
+import {SafeCast} from "v4-core/libraries/SafeCast.sol";
 import {PoolKey} from "v4-core/types/PoolKey.sol";
 import {Currency} from "v4-core/types/Currency.sol";
 import {BalanceDeltaLibrary, toBalanceDelta} from "v4-core/types/BalanceDelta.sol";
@@ -13,14 +14,14 @@ import {IHooks} from "@uniswap/v4-core/src/interfaces/IHooks.sol";
 import {BeforeSwapDelta, toBeforeSwapDelta, BeforeSwapDeltaLibrary} from "v4-core/types/BeforeSwapDelta.sol";
 import {BaseHook, BalanceDelta} from "v4-periphery/src/base/hooks/BaseHook.sol";
 
-import {Hooks} from "@uniswap/v4-core/src/libraries/Hooks.sol";
+import {Hooks, CustomRevert, ParseBytes } from "@uniswap/v4-core/src/libraries/Hooks.sol";
 import {BalanceDelta} from "@uniswap/v4-core/src/types/BalanceDelta.sol";
 
 import "forge-std/console.sol";
 
 
 struct Hook {
-    address hookAddress;
+    IHooks hook;
     uint96 hookQueue;
 }
 
@@ -29,8 +30,13 @@ struct HookPacked {
     uint8 hookId;
 }
 
+
 library MultihookLib {
+    using Hooks for IHooks;
+
+    using SafeCast for *;
     using BeforeSwapDeltaLibrary for BeforeSwapDelta;
+
     bytes32 constant public ACTIVE_POOL_SLOT = 0x00;
 
     uint24 public constant HOOKS_COUNT_MASK = 0xF0000;
@@ -72,7 +78,7 @@ library MultihookLib {
 
     uint8 public constant MAX_HOOKS_COUNT = HOOKS_BIT_MASK_SIZE;
 
-    function executeBeforeInitialize(
+    function beforeInitialize(
         Hook[] memory hooks,
         uint256 activatedHooks,
         address sender,
@@ -82,12 +88,12 @@ library MultihookLib {
     ) internal {
         Hook[] memory selectedHooks = getActivatedHooks(hooks, activatedHooks, BEFORE_INITIALIZE_HOOK_FLAGS, BEFORE_INITIALIZE_BIT_SHIFT);
         for (uint8 i = 0; i < selectedHooks.length; ++i) {
-            tstoreActivePool(selectedHooks[i].hookAddress);
+            tstoreActivePool(selectedHooks[i].hook);
             IHooks(selectedHooks[i].hookAddress).beforeInitialize(sender, key, sqrtPriceX96, hookData);
         }
     }
 
-    function executeAfterInitialize(
+    function afterInitialize(
         Hook[] memory hooks,
         uint256 activatedHooks,
         address sender,
@@ -103,7 +109,7 @@ library MultihookLib {
         }
     }
 
-    function executeBeforeAddLiquidity(
+    function beforeAddLiquidity(
         Hook[] memory hooks,
         uint256 activatedHooks,
         address sender,
@@ -118,7 +124,7 @@ library MultihookLib {
         }
     }
 
-    function executeBeforeRemoveLiquidity(
+    function beforeRemoveLiquidity(
         Hook[] memory hooks,
         uint256 activatedHooks,
         address sender,
@@ -133,7 +139,7 @@ library MultihookLib {
         }
     }
 
-    function executeAfterAddLiquidity(
+    function afterAddLiquidity(
         Hook[] memory hooks,
         uint256 activatedHooks,
         address sender,
@@ -141,17 +147,19 @@ library MultihookLib {
         IPoolManager.ModifyLiquidityParams calldata params,
         BalanceDelta delta,
         bytes calldata hookData
-    ) internal returns(BalanceDelta) {
+    ) internal returns(BalanceDelta hookDeltaSumm) {
         Hook[] memory selectedHooks = getActivatedHooks(hooks, activatedHooks, AFTER_ADD_LIQUIDITY_HOOK_FLAGS, AFTER_ADD_LIQUIDITY_BIT_SHIFT);
+        
+        BalanceDelta hookDelta;
         for (uint256 i = 0; i < selectedHooks.length; ++i) {
             tstoreActivePool(selectedHooks[i].hookAddress);
-            (, delta) = IHooks(selectedHooks[i].hookAddress).afterAddLiquidity(sender, key, params, delta, hookData);
+            (, hookDelta) = IHooks(selectedHooks[i].hookAddress).afterAddLiquidity(sender, key, params, delta, hookData);
+            delta = delta + hookDelta;
+            hookDeltaSumm = hookDeltaSumm + hookDelta;
         }
-
-        return delta;
     }
 
-    function executeAfterRemoveLiquidity(
+    function afterRemoveLiquidity(
         Hook[] memory hooks,
         uint256 activatedHooks,
         address sender,
@@ -159,44 +167,41 @@ library MultihookLib {
         IPoolManager.ModifyLiquidityParams calldata params,
         BalanceDelta delta,
         bytes calldata hookData
-    ) internal returns(BalanceDelta) {
+    ) internal returns(BalanceDelta hookDeltaSumm) {
         Hook[] memory selectedHooks = getActivatedHooks(hooks, activatedHooks, AFTER_REMOVE_LIQUIDITY_HOOK_FLAGS, AFTER_REMOVE_LIQUIDITY_BIT_SHIFT);
+        
+        BalanceDelta hookDelta;
         for (uint256 i = 0; i < selectedHooks.length; ++i) {
             tstoreActivePool(selectedHooks[i].hookAddress);
-            (, delta) = IHooks(selectedHooks[i].hookAddress).afterRemoveLiquidity(sender, key, params, delta, hookData);
+            (, hookDelta) = IHooks(selectedHooks[i].hookAddress).afterRemoveLiquidity(sender, key, params, delta, hookData);
+            delta = delta + hookDelta;
+            hookDeltaSumm = hookDeltaSumm + hookDelta;
         }
-
-        return delta;
     }
 
-    function executeBeforeSwap(
+    function beforeSwap(
         Hook[] memory hooks,
         uint256 activatedHooks,
         address sender,
         PoolKey calldata key,
-        IPoolManager.SwapParams calldata params,
+        IPoolManager.SwapParams memory params,
         bytes calldata hookData
-    ) internal returns(BeforeSwapDelta, uint24) {
+    ) internal returns(BeforeSwapDelta delta, uint24 fee) {
         Hook[] memory selectedHooks = getActivatedHooks(hooks, activatedHooks, BEFORE_SWAP_HOOK_FLAGS, BEFORE_SWAP_BIT_SHIFT);
         
-        //TODO: refactor
-        int128 deltaSpecified;
-        int128 deltaUnspecified;
-        uint24 fee;
-        bytes4 selector;
-        BeforeSwapDelta delta;
+        int256 deltaSpecifiedInit = params.amountSpecified;
+        int128 deltaUnspecifiedSumm;
         for (uint256 i = 0; i < selectedHooks.length; ++i) {
             tstoreActivePool(selectedHooks[i].hookAddress);
-            (selector, delta, fee) = IHooks(selectedHooks[i].hookAddress).beforeSwap(sender, key, params, hookData);
-            deltaSpecified += delta.getSpecifiedDelta();
-            deltaUnspecified += delta.getUnspecifiedDelta();
+            (, delta, fee) = IHooks(selectedHooks[i].hookAddress).beforeSwap(sender, key, params, hookData);
+            params.amountSpecified += delta.getSpecifiedDelta();
+            deltaUnspecifiedSumm += delta.getUnspecifiedDelta();
         }
 
-        //TODO: fees
-        return (toBeforeSwapDelta(deltaSpecified, deltaUnspecified), fee);
+        delta = toBeforeSwapDelta((params.amountSpecified - deltaSpecifiedInit).toInt128(), deltaUnspecifiedSumm);
     }
 
-    function executeAfterSwap(
+    function afterSwap(
         Hook[] memory hooks,
         uint256 activatedHooks,
         address sender,
@@ -206,20 +211,21 @@ library MultihookLib {
         bytes calldata hookData
     ) internal returns(int128) {
         Hook[] memory selectedHooks = getActivatedHooks(hooks, activatedHooks, AFTER_SWAP_HOOK_FLAGS, AFTER_SWAP_BIT_SHIFT);
-        (int128 deltaSpecified, int128 deltaUnspecified) = getSpecifiedAndUnspecifiedCurrencies(delta, params.zeroForOne);
-        
+        (int128 poolDeltaSpecified, int128 poolDeltaUnspecified) = getSpecifiedAndUnspecifiedCurrencies(delta, params.zeroForOne);
+
+        int128 deltaUnspecifiedSumm;
         for (uint256 i = 0; i < selectedHooks.length; ++i) {
             tstoreActivePool(selectedHooks[i].hookAddress);
-            bytes4 selector;
-            (selector, deltaUnspecified) = IHooks(selectedHooks[i].hookAddress).afterSwap(sender, key, params, delta, hookData);
-            deltaUnspecified = deltaUnspecified;
-            delta = packBalanceDelta(deltaSpecified, deltaUnspecified, params.zeroForOne); //TODO: last
+            (bytes4 selector, int128 deltaUnspecified) = IHooks(selectedHooks[i].hookAddress).afterSwap(sender, key, params, delta, hookData);
+            deltaUnspecifiedSumm += deltaUnspecified;
+            poolDeltaUnspecified += deltaUnspecified;
+            delta = packBalanceDelta(poolDeltaSpecified, poolDeltaUnspecified, params.zeroForOne); //TODO: last
         }
 
-        return deltaUnspecified;
+        return deltaUnspecifiedSumm;
     }
 
-    function executeBeforeDonate(
+    function beforeDonate(
         Hook[] memory hooks,
         uint256 activatedHooks,
         address sender,
@@ -235,7 +241,7 @@ library MultihookLib {
         }
     }
 
-    function executeAfterDonate(
+    function afterDonate(
         Hook[] memory hooks,
         uint256 activatedHooks,
         address sender,
@@ -316,7 +322,7 @@ library MultihookLib {
         balanceDelta = toBalanceDelta(amount0, amount1);
     }
 
-    function tstoreActivePool(address hookAddress) internal {
+    function tstoreActivePool(IHooks hook) internal {
         assembly ("memory-safe") {
             tstore(ACTIVE_POOL_SLOT, hookAddress)
         }

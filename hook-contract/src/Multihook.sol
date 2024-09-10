@@ -8,10 +8,6 @@ import {MultihookLib, Hook} from "./MultihookLib.sol";
 
 import "forge-std/console.sol";
 
-error MaxHooksCountExceeded();
-error ZeroAddress();
-error FallbackFailure();
-
 contract Multihook is BaseHook, Ownable2Step {
     using MultihookLib for Hook[];
 
@@ -78,8 +74,7 @@ contract Multihook is BaseHook, Ownable2Step {
         uint160 sqrtPriceX96,
         bytes calldata hookData
     ) external override returns (bytes4) {
-        Hook[] memory hooksMem = hooks;
-        hooksMem.executeBeforeInitialize(activatedHooks, sender, key, sqrtPriceX96, hookData);
+        getHooks().beforeInitialize(activatedHooks, sender, key, sqrtPriceX96, hookData);
         return BaseHook.beforeInitialize.selector;
     }
 
@@ -90,8 +85,7 @@ contract Multihook is BaseHook, Ownable2Step {
         int24 tick,
         bytes calldata hookData
     ) external override returns (bytes4) {
-        Hook[] memory hooksMem = hooks;
-        hooksMem.executeAfterInitialize(activatedHooks, sender, key, sqrtPriceX96, tick, hookData);
+        getHooks().afterInitialize(activatedHooks, sender, key, sqrtPriceX96, tick, hookData);
         return BaseHook.afterInitialize.selector;
     }
 
@@ -105,8 +99,7 @@ contract Multihook is BaseHook, Ownable2Step {
         override
         returns (bytes4)
     {
-        Hook[] memory hooksMem = hooks;
-        hooksMem.executeBeforeAddLiquidity(activatedHooks, sender, key, params, hookData);
+        getHooks().beforeAddLiquidity(activatedHooks, sender, key, params, hookData);
         return BaseHook.beforeAddLiquidity.selector;
     }
 
@@ -117,8 +110,7 @@ contract Multihook is BaseHook, Ownable2Step {
         IPoolManager.ModifyLiquidityParams calldata params,
         bytes calldata hookData
     ) external override returns (bytes4) {
-        Hook[] memory hooksMem = hooks;
-        hooksMem.executeBeforeRemoveLiquidity(activatedHooks, sender, key, params, hookData);
+        getHooks().beforeRemoveLiquidity(activatedHooks, sender, key, params, hookData);
         return BaseHook.beforeRemoveLiquidity.selector;
     }
 
@@ -129,8 +121,7 @@ contract Multihook is BaseHook, Ownable2Step {
         BalanceDelta delta,
         bytes calldata hookData
     ) external override returns (bytes4, BalanceDelta) {
-        Hook[] memory hooksMem = hooks;
-        delta = hooksMem.executeAfterAddLiquidity(activatedHooks, sender, key, params, delta, hookData);
+        delta = getHooks().afterAddLiquidity(activatedHooks, sender, key, params, delta, hookData);
         return (BaseHook.afterAddLiquidity.selector, delta);
     }
 
@@ -141,8 +132,7 @@ contract Multihook is BaseHook, Ownable2Step {
         BalanceDelta delta,
         bytes calldata hookData
     ) external override returns (bytes4, BalanceDelta) {
-        Hook[] memory hooksMem = hooks;
-        delta = hooksMem.executeAfterAddLiquidity(activatedHooks, sender, key, params, delta, hookData);
+        delta = getHooks().afterRemoveLiquidity(activatedHooks, sender, key, params, delta, hookData);
         return (BaseHook.afterRemoveLiquidity.selector, delta);
     }
 
@@ -152,8 +142,7 @@ contract Multihook is BaseHook, Ownable2Step {
         IPoolManager.SwapParams calldata params,
         bytes calldata hookData
     ) external override returns (bytes4, BeforeSwapDelta, uint24) {
-        Hook[] memory hooksMem = hooks;
-        (BeforeSwapDelta delta, uint24 fee) = hooksMem.executeBeforeSwap(activatedHooks, sender, key, params, hookData);
+        (BeforeSwapDelta delta, uint24 fee) = getHooks().beforeSwap(activatedHooks, sender, key, params, hookData);
         return (BaseHook.beforeSwap.selector, delta, fee);
     }
 
@@ -164,8 +153,7 @@ contract Multihook is BaseHook, Ownable2Step {
         BalanceDelta delta, 
         bytes calldata hookData
     ) external override returns (bytes4, int128) {
-        Hook[] memory hooksMem = hooks;
-        int128 deltaUnspecified = hooksMem.executeAfterSwap(activatedHooks, sender, key, params, delta, hookData);
+        int128 deltaUnspecified = getHooks().afterSwap(activatedHooks, sender, key, params, delta, hookData);
         return (BaseHook.afterSwap.selector, deltaUnspecified);
     }
 
@@ -176,8 +164,7 @@ contract Multihook is BaseHook, Ownable2Step {
         uint256 amount1,
         bytes calldata hookData
     ) external override returns (bytes4) {
-        Hook[] memory hooksMem = hooks;
-        hooksMem.executeBeforeDonate(activatedHooks, sender, key, amount0, amount1, hookData);
+        getHooks().beforeDonate(activatedHooks, sender, key, amount0, amount1, hookData);
         return (BaseHook.beforeDonate.selector);
     }
 
@@ -192,8 +179,7 @@ contract Multihook is BaseHook, Ownable2Step {
         override
         returns (bytes4)
     {
-        Hook[] memory hooksMem = hooks;
-        hooksMem.executeAfterDonate(activatedHooks, sender, key, amount0, amount1, hookData);
+        getHooks().afterDonate(activatedHooks, sender, key, amount0, amount1, hookData);
         return (BaseHook.afterDonate.selector);
     }
 
@@ -202,15 +188,7 @@ contract Multihook is BaseHook, Ownable2Step {
         return hook.unlockCallback(data);
     }
 
-    fallback() external {
-        if (msg.sender == MultihookLib.tloadPool()) {
-           _callOptionalReturn(address(poolManager), msg.data);
-        } else {
-            revert FallbackFailure();
-        }
-    }
-
-     function changeHooks(Hook[] memory updatedHooks, uint256 updatedActivatedHooks) external onlyOwner {
+    function changeHooks(Hook[] memory updatedHooks, uint256 updatedActivatedHooks) external onlyOwner {
         _setHooks(updatedHooks, pendingHooks, updatedActivatedHooks);
         pendingActivatedHooks = updatedActivatedHooks;
         changeHooksTimer = block.timestamp;
@@ -244,6 +222,10 @@ contract Multihook is BaseHook, Ownable2Step {
         delete changeHooksTimer;
         emit NewHooksRejected(block.timestamp);
     }
+
+    function getHooks() private returns(Hook[] memory) {
+        return hooks;
+    }
     
     function _setHooks(Hook[] memory initHooks, Hook[] storage shooks, uint256 initActivatedHooks) private {
          if (initHooks.length > MultihookLib.MAX_HOOKS_COUNT) {
@@ -254,13 +236,22 @@ contract Multihook is BaseHook, Ownable2Step {
 
         //TODO: validate
         for (uint256 i = 0; i < initHooks.length; ++i) {
-            if (initHooks[i].hookAddress == address(0)) {
+            if (initHooks[i].hook == address(0)) {
                 revert ZeroAddress();
             }
 
             shooks.push(initHooks[i]);
         }
     }
+
+    fallback() external {
+        if (msg.sender == MultihookLib.tloadPool()) {
+           _callOptionalReturn(address(poolManager), msg.data);
+        } else {
+            revert FallbackFailure();
+        }
+    }
+
 
     function _callOptionalReturn(address callTo, bytes memory data) private {
         console.log("_callOptionalReturn");

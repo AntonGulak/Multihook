@@ -323,7 +323,6 @@ contract PoolManager is IPoolManager, ProtocolFees, NoDelegateCall, ERC6909Claim
 
     /// @inheritdoc IPoolManager
     function updateDynamicLPFee(PoolKey memory key, uint24 newDynamicLPFee) external {
-        console.log("updateDynamicLPFee");
         if (!key.fee.isDynamicFee() || msg.sender != address(key.hooks)) {
             UnauthorizedDynamicLPFeeUpdate.selector.revertWith();
         }
