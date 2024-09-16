@@ -4,3 +4,6 @@
 [submodule "hook-contract/lib/gas-price-hook"]
 	path = hook-contract/lib/gas-price-hook
 	url = https://github.com/haardikk21/gas-price-hook.git
+[submodule "hook-contract/lib/no-hook-lpb"]
+	path = hook-contract/lib/no-hook-lpb
+	url = https://github.com/RostyslavBortman/lbp-NoOp-hook.git

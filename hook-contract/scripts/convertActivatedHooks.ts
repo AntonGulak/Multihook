@@ -135,4 +135,5 @@ function countActivatedHooks(hooksFlags: number): number {
 
   console.log(newActivatedHooks.toString(2));
   console.log(newActivatedHooks);
-//   logActivatedHooks(newActivatedHooks);
+  
+  logActivatedHooks(newActivatedHooks);

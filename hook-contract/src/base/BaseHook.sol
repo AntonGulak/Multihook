@@ -6,7 +6,11 @@ import {BeforeSwapDelta} from "v4-core/types/BeforeSwapDelta.sol";
 
 import {SafeCallback} from "./SafeCallback.sol";
 
-abstract contract BaseHook is IHooks, SafeCallback {
+interface IHookPermissions {
+    function getHookPermissions() external returns (Hooks.Permissions memory);
+}
+
+abstract contract BaseHook is IHooks, IHookPermissions, SafeCallback {
     error NotSelf();
     error InvalidPool();
     error LockFailure();

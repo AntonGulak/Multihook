@@ -1,35 +1,25 @@
-// SPDX-License-Identifier: Apache-2.0
-// Anton Gulak https://t.me/gulak_a
-pragma solidity ^0.8.24;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
 
 import {IUnlockCallback} from "v4-core/interfaces/callback/IUnlockCallback.sol";
 import {Ownable2Step, Ownable} from "@openzeppelin/contracts/access/Ownable2Step.sol";
-import {BaseHook, IHookPermissions, Hooks, IHooks, IPoolManager, PoolKey, BalanceDelta, BeforeSwapDelta} from "./base/BaseHook.sol";
-import {MultihookLib, CustomRevert, PackedHook, ParseBytes} from "./MultihookLib.sol";
+import {BaseHook, Hooks, IHooks, IPoolManager, PoolKey, BalanceDelta, BeforeSwapDelta} from "../base/BaseHook.sol";
+import {AdaptiveMultihookLib, Hook} from "./AdaptiveMultihookLib.sol";
 
 import "forge-std/console.sol";
 
-struct AcceptedMethod {
-    address hook;
-    bytes4 signature;
-    bool status;
-}
 
-contract Multihook is BaseHook, Ownable2Step {
-    using ParseBytes for bytes;
-    using MultihookLib for PackedHook[];
-    using CustomRevert for bytes4;
+contract AdaptiveMultihook is BaseHook, Ownable2Step {
+    using AdaptiveMultihookLib for Hook[];
 
     uint256 public changeHooksTimer;
     uint256 public activatedHooks;
-    PackedHook[] public hooks;
+    Hook[] public hooks;
 
     uint256 public pendingActivatedHooks;
-    AcceptedMethod[] public pendingAcceptedMethods;
-    PackedHook[] public pendingHooks;
+    Hook[] public pendingHooks;
 
     uint256 public timeout;
-    mapping(bytes32 hookAddressWithSelector => bool) public selectorIsApproved;
 
     error NoHooksPendingApproval();
     error HooksApprovalTimedOut();
@@ -37,34 +27,21 @@ contract Multihook is BaseHook, Ownable2Step {
     error MaxHooksCountExceeded();
     error ZeroAddress();
     error FallbackFailure();
-    error IncorrectPoolId();
 
-    event HooksUpdated(PackedHook[] updatedHooks, uint256 updatedActivatedHooks, uint256 timestamp);
-    event NewHooksAccepted(PackedHook[] acceptedHooks, uint256 timestamp);
+    event HooksUpdated(Hook[] updatedHooks, uint256 updatedActivatedHooks, uint256 timestamp);
+    event NewHooksAccepted(Hook[] acceptedHooks, uint256 timestamp);
     event NewHooksRejected(uint256 timestamp);
     event HooksTimeoutExceeded(uint256 timestamp);
     
     constructor(
         IPoolManager poolManager,
-        PackedHook[] memory initHooks,
-        AcceptedMethod[] memory acceptedMetods,
+        Hook[] memory initHooks,
         uint256 initActivatedHooks,
         address manager,
         uint256 initTimeout
     ) BaseHook(poolManager) Ownable(manager) {
-       _setHooks(initHooks, hooks);
-       _acceptMethods(acceptedMetods);
-
-       activatedHooks = initActivatedHooks;
+       _setHooks(initHooks, hooks, initActivatedHooks);
        timeout = initTimeout;
-    }
-
-    fallback() external {
-        if (msg.sender == MultihookLib.tloadPool()) {
-           _callOptionalReturn(address(poolManager), msg.data);
-        } else {
-            FallbackFailure.selector.revertWith();
-        }
     }
 
     function getHookPermissions()
@@ -127,6 +104,7 @@ contract Multihook is BaseHook, Ownable2Step {
         return BaseHook.beforeAddLiquidity.selector;
     }
 
+    
     function beforeRemoveLiquidity(
         address sender,
         PoolKey calldata key,
@@ -207,93 +185,77 @@ contract Multihook is BaseHook, Ownable2Step {
     }
 
     function unlockCallback(bytes calldata data) external onlyByPoolManager override returns (bytes memory) {
-        IUnlockCallback hook = IUnlockCallback(MultihookLib.tloadPool());
+        IUnlockCallback hook = IUnlockCallback(AdaptiveMultihookLib.tloadPool());
         return hook.unlockCallback(data);
     }
 
-    function customCallToSubhook(uint8 poolId, bytes memory data) external {
-        if (poolId >= hooks.length) IncorrectPoolId.selector.revertWith();
-        address hookAddress = address(hooks[poolId].hook);
-
-        if (selectorIsApproved[bytes32(bytes20(uint160(hookAddress))) | (bytes32(data.parseSelector()) >> 224)]) {
-            MultihookLib.tstoreActivePool(IHooks(hookAddress));
-            _callOptionalReturnAndClearActivePool(hookAddress, data);
-        }
-    }
-    
-
-    function changeHooks(
-        PackedHook[] memory updatedHooks,
-        AcceptedMethod[] memory updatedAcceptedMethods,
-        uint256 updatedActivatedHooks
-    ) external onlyOwner {
-        _setHooks(updatedHooks, pendingHooks);
+    function changeHooks(Hook[] memory updatedHooks, uint256 updatedActivatedHooks) external onlyOwner {
+        _setHooks(updatedHooks, pendingHooks, updatedActivatedHooks);
         pendingActivatedHooks = updatedActivatedHooks;
         changeHooksTimer = block.timestamp;
-        for (uint256 i = 0; i < updatedAcceptedMethods.length; ++i) pendingAcceptedMethods.push(updatedAcceptedMethods[i]);
         emit HooksUpdated(updatedHooks, updatedActivatedHooks, block.timestamp);
     }
 
     function acceptNewHooks() external onlyOwner {
         if (changeHooksTimer == 0) {
-            NoHooksPendingApproval.selector.revertWith();
+            revert NoHooksPendingApproval();
         }
         if (block.timestamp > changeHooksTimer + timeout) {
-            HooksApprovalTimedOut.selector.revertWith();
+            revert HooksApprovalTimedOut();
         }
-        _setHooks(pendingHooks, hooks);
-        _acceptMethods(pendingAcceptedMethods);
-        activatedHooks = pendingActivatedHooks;
-        changeHooksTimer  = 0; 
 
+        hooks = pendingHooks;
+        activatedHooks = pendingActivatedHooks;
         delete pendingHooks;
         delete pendingActivatedHooks;
+        delete changeHooksTimer; 
         emit NewHooksAccepted(hooks, block.timestamp); 
     }
 
 
     function rejectNewHooks() external onlyOwner {
         if (changeHooksTimer == 0) {
-            NoHooksPendingApproval.selector.revertWith();
+            revert NoHooksPendingApproval();
         }
 
-        changeHooksTimer = 0;
         delete pendingHooks;
         delete pendingActivatedHooks;
-        delete pendingActivatedHooks;
+        delete changeHooksTimer;
         emit NewHooksRejected(block.timestamp);
     }
 
-    function getHooks() private view returns(PackedHook[] memory) {
+    function getHooks() private view returns(Hook[] memory) {
         return hooks;
     }
     
-    function _setHooks(
-        PackedHook[] memory initHooks,
-        PackedHook[] storage shooks
-    ) private {
-        if (initHooks.length > MultihookLib.MAX_HOOKS_COUNT) {
-            MaxHooksCountExceeded.selector.revertWith();
+    function _setHooks(Hook[] memory initHooks, Hook[] storage shooks, uint256 initActivatedHooks) private {
+         if (initHooks.length > AdaptiveMultihookLib.MAX_HOOKS_COUNT) {
+            revert MaxHooksCountExceeded();
         }
+
+        activatedHooks = initActivatedHooks;
+
+        //TODO: validate
         for (uint256 i = 0; i < initHooks.length; ++i) {
-            address hookAddress = address(initHooks[i].hook);
-            Hooks.validateHookPermissions(initHooks[i].hook, IHookPermissions(hookAddress).getHookPermissions());
+            if (address(initHooks[i].hook) == address(0)) {
+                revert ZeroAddress();
+            }
+
             shooks.push(initHooks[i]);
         }
     }
 
-    function _acceptMethods(
-        AcceptedMethod[] memory acceptedMethods
-    ) private {
-        for (uint256 i = 0; i < acceptedMethods.length; ++i) {
-            bytes32 approvedMethod = bytes32(bytes20(uint160(acceptedMethods[i].hook))) 
-                | (bytes32(acceptedMethods[i].signature) >> 224);
-
-            selectorIsApproved[approvedMethod] = acceptedMethods[i].status;
+    fallback() external {
+        if (msg.sender == AdaptiveMultihookLib.tloadPool()) {
+           _callOptionalReturn(address(poolManager), msg.data);
+        } else {
+            revert FallbackFailure();
         }
     }
+
 
     function _callOptionalReturn(address callTo, bytes memory data) private {
+        console.log("_callOptionalReturn");
         assembly ("memory-safe") {
             let success := call(gas(), callTo, 0, add(data, 0x20), mload(data), 0, 0x20)
             returndatacopy(0, 0, returndatasize())
@@ -308,19 +270,4 @@ contract Multihook is BaseHook, Ownable2Step {
         }
     }
 
-    function _callOptionalReturnAndClearActivePool(address callTo, bytes memory data) private {
-        assembly ("memory-safe") {
-            let success := call(gas(), callTo, 0, add(data, 0x20), mload(data), 0, 0x20)
-            tstore(0x00, 0x00) //0x00 = ACTIVE_POOL_SLOT
-            returndatacopy(0, 0, returndatasize())
-
-            switch success
-            case 0 {
-                revert(0, returndatasize())
-            }
-            default {
-                return(0, returndatasize())
-            }
-        }
-    }
 }
