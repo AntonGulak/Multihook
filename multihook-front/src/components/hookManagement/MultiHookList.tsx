@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import HookCard from './HookCard';
+import HookCard from './MultiHookCard';
 import { mockHooks } from '../../hooksMock';
 
-import '../../styles/hookManagement/hookList.css';
+import '../../styles/hookManagement/multiHookList.css';
 
 export interface Hook {
   id: string;
@@ -12,11 +12,11 @@ export interface Hook {
   creationDate: string;
 }
 
-interface HookListProps {
+interface MultiHookListProps {
   onSelectHook: (hook: Hook) => void;
 }
 
-const HookList: React.FC<HookListProps> = ({ onSelectHook }) => {
+const MultiHookList: React.FC<MultiHookListProps> = ({ onSelectHook }) => {
   const [hooks, setHooks] = useState<Hook[]>([]);
   const [selectedNetworks, setSelectedNetworks] = useState<string[]>([]);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
@@ -26,11 +26,10 @@ const HookList: React.FC<HookListProps> = ({ onSelectHook }) => {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Имитация загрузки данных
     setTimeout(() => {
       setHooks(mockHooks);
       setIsLoading(false);
-    }, 2000); // Задержка для имитации загрузки
+    }, 2000); 
   }, []);
 
   const uniqueNetworks = useMemo(() => {
@@ -127,7 +126,6 @@ const HookList: React.FC<HookListProps> = ({ onSelectHook }) => {
       </div>
       <div className="hook-list">
         {isLoading ? (
-          // Заглушки при загрузке
           Array(9).fill(0).map((_, index) => (
             <div key={index} className="hook-card loading-placeholder" />
           ))
@@ -145,4 +143,4 @@ const HookList: React.FC<HookListProps> = ({ onSelectHook }) => {
   );
 }
 
-export default HookList;
+export default MultiHookList;

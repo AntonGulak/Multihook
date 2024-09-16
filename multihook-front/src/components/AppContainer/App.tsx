@@ -1,9 +1,8 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import Sidebar from '../sidebar/Sidebar';
-import NextStep from '../hookManagement/NextStep';
-import HookList, { Hook } from '../hookManagement/HookList';
-import HookDetails from '../hookManagement/HookDetails';
-import CreateHook from '../hookManagement/CreateHook';
+import HookList, { Hook } from '../hookManagement/MultiHookList';
+import MultiHookDetails from '../hookManagement/MultiHookDetails';
+import CreateHook from '../hookManagement/createMultihook/CreateMultiHookMain';
 import MetaMaskLogin from '../auth/MetaMaskLogin';
 
 import '../../styles/appContainer/app.css';
@@ -58,11 +57,9 @@ const App: React.FC = () => {
       case 'hookList':
         return <HookList onSelectHook={handleSelectHook} />;
       case 'hookDetails':
-        return selectedHook && <HookDetails hook={selectedHook} onBack={handleBackToList} />;
+        return selectedHook && <MultiHookDetails hook={selectedHook} onBack={handleBackToList} />;
       case 'createHook':
         return <CreateHook />;
-      case 'nextStep':
-        return <NextStep />;
       default:
         return null;
     }

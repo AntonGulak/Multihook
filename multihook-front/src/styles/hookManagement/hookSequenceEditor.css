@@ -1,0 +1,176 @@
+.hook-sequence-container {
+  padding: 20px;
+  margin: 0 auto;
+  max-width: 1200px;
+  width: 100%;
+  height: calc(100vh - 60px); /* Высота контейнера */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* Прячем выходящий за пределы контент */
+}
+
+.hook-points-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); /* Адаптация колонок */
+  gap: 20px;
+  flex-grow: 1;
+  padding-top: 10px;
+  overflow-y: auto;
+  padding-right: 15px;
+}
+
+/* Кастомизация полосы прокрутки */
+.hook-points-container::-webkit-scrollbar {
+  width: 12px;
+}
+
+.hook-points-container::-webkit-scrollbar-track {
+  background: var(--input-background);
+  border-radius: 10px;
+}
+
+.hook-points-container::-webkit-scrollbar-thumb {
+  background-color: var(--primary-color);
+  border-radius: 10px;
+  border: 3px solid var(--input-background);
+}
+
+.hook-points-container::-webkit-scrollbar-thumb:hover {
+  background-color: var(--secondary-color);
+}
+
+.hook-point-card {
+  background: linear-gradient(to bottom, #2b2d42, var(--background-color));
+  padding: 20px;
+  border-radius: 10px;
+  transition: transform 0.3s, box-shadow 0.3s;
+  box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.4);
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  cursor: pointer;
+  position: relative;
+}
+
+.hook-point-card h3 {
+  margin-bottom: 10px; /* Уменьшен отступ после названия хукпоинта */
+}
+
+.hook-point-list {
+  max-height: 150px;
+  overflow-y: auto;
+  background-color: var(--input-background);
+  border-radius: 10px;
+  padding: 10px;
+  min-height: 100px;
+  margin-top: 0; /* Убираем отступ сверху */
+  margin-bottom: 10px; /* Уменьшаем отступ снизу */
+}
+
+/* Кастомизация полосы прокрутки для списка хукпоинтов */
+.hook-point-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.hook-point-list::-webkit-scrollbar-track {
+  background: var(--input-background);
+  border-radius: 10px;
+}
+
+.hook-point-list::-webkit-scrollbar-thumb {
+  background-color: var(--primary-color);
+  border-radius: 10px;
+  border: 2px solid var(--input-background);
+}
+
+.hook-point-list::-webkit-scrollbar-thumb:hover {
+  background-color: var(--secondary-color);
+}
+
+.hook-item {
+  margin-bottom: 8px;
+  padding: 5px;
+  border-radius: 8px;
+  background: var(--input-background);
+  cursor: pointer;
+  text-align: center;
+  min-height: 60px; /* Фиксированная высота для всех элементов */
+}
+
+.hook-item h4 {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--text-color);
+}
+
+.sequence-editor-buttons {
+  display: flex;
+  justify-content: space-between; /* Разместим кнопки по краям */
+  padding-top: 20px;
+  margin-top: 20px;
+}
+
+.sequence-editor-buttons button {
+  background-color: darkorange; /* Цвет кнопок */
+  color: white;
+  border: none;
+  padding: 15px 40px; /* Размер кнопок */
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.sequence-editor-buttons button:hover {
+  background-color: darkorange; /* Цвет при наведении */
+  transform: scale(1.05); /* Эффект увеличения при наведении */
+}
+
+.sequence-editor-buttons button:disabled {
+  background-color: var(--input-background); /* Цвет кнопки в неактивном состоянии */
+  color: var(--muted-text-color);
+  cursor: not-allowed;
+}
+
+.hook-point-title {
+  background-color: rgba(43, 45, 66, 0.9); /* Полупрозрачный фон, соответствующий общей цветовой гамме */
+  padding: 10px;
+  border-radius: 8px;
+  text-align: center;
+  color: #fff;
+  font-size: 1.25rem;
+  font-weight: bold;
+  position: absolute; /* Оставляем position: absolute для эффекта выше карточки */
+  top: -15px; /* Поднимаем над карточкой */
+  left: 50%;
+  transform: translateX(-50%); /* Центрируем по горизонтали */
+  z-index: 1;
+  width: 80%; /* Ширина чуть меньше самой карточки */
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2); /* Лёгкая тень для выделения */
+}
+
+.hook-point-list {
+  max-height: 240px; /* Увеличена высота списка */
+  overflow-y: auto;
+  background-color: var(--input-background);
+  border-radius: 10px;
+  padding: 10px;
+  min-height: 180px;
+  margin-top: 40px;
+}
+
+/* Адаптивные стили */
+@media (max-width: 768px) {
+  .hook-sequence-container {
+    padding: 15px;
+  }
+
+  .hook-points-container {
+    grid-template-columns: 1fr; /* Одна колонка на маленьких экранах */
+  }
+
+  .sequence-editor-buttons button {
+    padding: 10px 30px; /* Уменьшенные кнопки для мобильных устройств */
+  }
+}

@@ -1,7 +1,7 @@
 import React from 'react';
 import '../../styles/appContainer/app.css';
 
-interface HookCardProps {
+interface MultiHookCardProps {
   hook: {
     id: string;
     address: string;
@@ -9,10 +9,10 @@ interface HookCardProps {
     name: string;
     creationDate: string;
   };
-  onClick: () => void; // Добавляем onClick как пропс
+  onClick: () => void;
 }
 
-const HookCard: React.FC<HookCardProps> = ({ hook, onClick }) => {
+const HookCard: React.FC<MultiHookCardProps> = ({ hook, onClick }) => {
   return (
     <div className="hook-card" onClick={onClick}>
       <h3>{hook.name}</h3>

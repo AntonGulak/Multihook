@@ -1,7 +1,7 @@
 import React from 'react';
-import '../../styles/hookManagement/hookDetails.css';
+import '../../styles/hookManagement/multiHookDetails.css';
 
-interface HookDetailsProps {
+interface MultiHookDetailsProps {
   hook: {
     id: string;
     address: string;
@@ -12,7 +12,7 @@ interface HookDetailsProps {
   onBack: () => void;
 }
 
-const HookDetails: React.FC<HookDetailsProps> = ({ hook, onBack }) => {
+const MultiHookDetails: React.FC<MultiHookDetailsProps> = ({ hook, onBack }) => {
   return (
     <div className="hook-details-container">
       <button onClick={onBack} className="back-button">← Back</button>
@@ -25,4 +25,4 @@ const HookDetails: React.FC<HookDetailsProps> = ({ hook, onBack }) => {
   );
 }
 
-export default HookDetails;
+export default MultiHookDetails;
