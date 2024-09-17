@@ -6,9 +6,6 @@ import {Ownable2Step, Ownable} from "@openzeppelin/contracts/access/Ownable2Step
 import {BaseHook, Hooks, IHooks, IPoolManager, PoolKey, BalanceDelta, BeforeSwapDelta} from "../base/BaseHook.sol";
 import {AdaptiveMultihookLib, Hook} from "./AdaptiveMultihookLib.sol";
 
-import "forge-std/console.sol";
-
-
 contract AdaptiveMultihook is BaseHook, Ownable2Step {
     using AdaptiveMultihookLib for Hook[];
 
@@ -255,7 +252,6 @@ contract AdaptiveMultihook is BaseHook, Ownable2Step {
 
 
     function _callOptionalReturn(address callTo, bytes memory data) private {
-        console.log("_callOptionalReturn");
         assembly ("memory-safe") {
             let success := call(gas(), callTo, 0, add(data, 0x20), mload(data), 0, 0x20)
             returndatacopy(0, 0, returndatasize())

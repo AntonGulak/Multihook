@@ -15,10 +15,6 @@ import {BaseHook} from "v4-periphery/src/base/hooks/BaseHook.sol";
 import {CustomRevert, ParseBytes } from "@uniswap/v4-core/src/libraries/Hooks.sol";
 import {BytesLib} from "./base/BytesLib.sol";
 
-
-import "forge-std/console.sol";
-
-
 struct PackedHook {
     IHooks hook;
     uint96 hookQueue;
@@ -38,7 +34,7 @@ library MultihookLib {
 
     uint24 public constant HOOKS_COUNT_MASK = 0xF0000;
     uint24 public constant HOOKS_BIT_MASK = 0x0FFFF;
-
+йййййййййййййййййй
     uint8 public constant HOOKS_COUNT_MASK_SIZE = 4;
     uint8 public constant HOOKS_BIT_MASK_SIZE = 16;
 
