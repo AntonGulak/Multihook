@@ -12,14 +12,13 @@ import {toBeforeSwapDelta, BeforeSwapDelta} from "v4-core/types/BeforeSwapDelta.
 import {PoolId, PoolIdLibrary} from "v4-core/types/PoolId.sol";
 import {CurrencyLibrary, Currency} from "v4-core/types/Currency.sol";
 import {Deployers} from "@uniswap/v4-core/test/utils/Deployers.sol";
-import {PackedHook, Multihook, AcceptedMethod, BaseHook} from "../src/Multihook.sol";
+import {PackedHook, Multihook, AcceptedMethod, BaseHook, MultiHookInitParams} from "../src/Multihook.sol";
 import {MockHook} from "../src/test/MockHook.sol";
 import {IERC20Minimal} from "v4-core/interfaces/external/IERC20Minimal.sol";
 import {LPFeeLibrary} from "v4-core/libraries/LPFeeLibrary.sol";
 import {GasPriceFeesHook} from "gas-price-hook/src/GasPriceFeesHook.sol";
 import {PoolSwapTest} from "v4-core/test/PoolSwapTest.sol";
 import {GasPriceFeesHook} from "gas-price-hook/src/GasPriceFeesHook.sol";
-import {LBP} from "no-hook-lpb/src/LBP.sol";
 
 
 import {SafeCast} from "v4-core/libraries/SafeCast.sol";
@@ -79,6 +78,7 @@ contract MultihookTest is Test, Deployers {
 
     function setUp() public {
         deployFreshManagerAndRouters();
+        (currency0, currency1) = deployMintAndApprove2Currencies();
 
         address multiHookAddress = address(
             uint160(
@@ -92,7 +92,16 @@ contract MultihookTest is Test, Deployers {
         AcceptedMethod[] memory initAcceptedMethod;
         deployCodeTo(
             "src/Multihook.sol:Multihook",
-            abi.encode(manager, initHooks, initAcceptedMethod, activatedHooks, address(this), timeout), multiHookAddress
+            abi.encode(MultiHookInitParams(
+                manager,
+                currency0,
+                currency1,
+                initHooks,
+                initAcceptedMethod,
+                activatedHooks,
+                address(this),
+                timeout
+            )), multiHookAddress
         );
         hook = Multihook(multiHookAddress);
     }
@@ -560,7 +569,6 @@ contract MultihookTest is Test, Deployers {
         hook.changeHooks(newHooks, initAcceptedMethod, activatedHooks);
         hook.acceptNewHooks();
 
-        (currency0, currency1) = deployMintAndApprove2Currencies();
         (key, ) = initPool(
             currency0,
             currency1,

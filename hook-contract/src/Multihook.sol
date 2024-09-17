@@ -6,8 +6,7 @@ import {IUnlockCallback} from "v4-core/interfaces/callback/IUnlockCallback.sol";
 import {Ownable2Step, Ownable} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import {BaseHook, IHookPermissions, Hooks, IHooks, IPoolManager, PoolKey, BalanceDelta, BeforeSwapDelta} from "./base/BaseHook.sol";
 import {MultihookLib, CustomRevert, PackedHook, ParseBytes} from "./MultihookLib.sol";
-
-import "forge-std/console.sol";
+import {Currency, CurrencyLibrary} from "v4-core/types/Currency.sol";
 
 struct AcceptedMethod {
     address hook;
@@ -15,10 +14,25 @@ struct AcceptedMethod {
     bool status;
 }
 
+struct MultiHookInitParams {
+    IPoolManager poolManager;
+    Currency currency0;
+    Currency currency1;
+    PackedHook[] initHooks;
+    AcceptedMethod[] acceptedMethods;
+    uint256 initActivatedHooks;
+    address manager;
+    uint256 initTimeout;
+}
+
 contract Multihook is BaseHook, Ownable2Step {
     using ParseBytes for bytes;
     using MultihookLib for PackedHook[];
+    using CurrencyLibrary for Currency;
     using CustomRevert for bytes4;
+
+    Currency public currency0;
+    Currency public currency1;
 
     uint256 public changeHooksTimer;
     uint256 public activatedHooks;
@@ -44,23 +58,26 @@ contract Multihook is BaseHook, Ownable2Step {
     event NewHooksRejected(uint256 timestamp);
     event HooksTimeoutExceeded(uint256 timestamp);
     
-    constructor(
-        IPoolManager poolManager,
-        PackedHook[] memory initHooks,
-        AcceptedMethod[] memory acceptedMetods,
-        uint256 initActivatedHooks,
-        address manager,
-        uint256 initTimeout
-    ) BaseHook(poolManager) Ownable(manager) {
-       _setHooks(initHooks, hooks);
-       _acceptMethods(acceptedMetods);
-
-       activatedHooks = initActivatedHooks;
-       timeout = initTimeout;
+    constructor(MultiHookInitParams memory params) BaseHook(params.poolManager) Ownable(params.manager) {
+       _setHooks(params.initHooks, hooks);
+       _acceptMethods(params.acceptedMethods);
+       activatedHooks = params.initActivatedHooks;
+       timeout = params.initTimeout;
+       currency0 = params.currency0;
+       currency1 = params.currency1;
     }
 
     fallback() external {
+        /*
+            TODO: For greater compatibility, it is necessary to allow all active hooks to send 
+            requests to the PoolManager via fallback (if these are custom methods).
+            However, security considerations must be carefully thought
+        */
         if (msg.sender == MultihookLib.tloadPool()) {
+            if (msg.data.parseSelector() == IPoolManager.settle.selector) {
+                currency0.transfer(address(poolManager), currency0.balanceOfSelf());
+                currency1.transfer(address(poolManager), currency1.balanceOfSelf());
+            }
            _callOptionalReturn(address(poolManager), msg.data);
         } else {
             FallbackFailure.selector.revertWith();

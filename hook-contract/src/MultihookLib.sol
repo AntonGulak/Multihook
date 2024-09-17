@@ -98,11 +98,7 @@ library MultihookLib {
     uint8 public constant BEFORE_DONATE_DATA_BIT_SHIFT = 1 * (HOOK_DATA_POSITION_SIZE + HOOK_DATA_LENGTH_SIZE);
     uint8 public constant AFTER_DONATE_DATA_BIT_SHIFT = 0;
 
-    /// @notice Hook did not return its selector
     error InvalidHookResponse();
-
-    /// @notice thrown when a hook call fails
-    /// @param revertReason bubbled up revert reason
     error Wrap__FailedHookCall(address hook, bytes revertReason);
 
     function beforeInitialize(
@@ -343,8 +339,6 @@ library MultihookLib {
         }
     }
 
-    /// @notice performs a hook call using the given calldata on the given hook that doesnt return a delta
-    /// @return result The complete data returned by the hook
     function callHook(IHooks self, bytes memory data) internal returns (bytes memory result) {
         tstoreActivePool(self);
 
@@ -367,8 +361,6 @@ library MultihookLib {
         tclearActivePool();
     }
 
-    /// @notice performs a hook call using the given calldata on the given hook
-    /// @return int256 The delta returned by the hook
     function callHookWithReturnDelta(IHooks self, bytes memory data, bool parseReturn) internal returns (int256) {
         bytes memory result = callHook(self, data);
         if (!parseReturn) return 0;
