@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-pragma solidity ^0.8.24;
+pragma solidity =0.8.26;
 
 import {IUnlockCallback} from "v4-core/interfaces/callback/IUnlockCallback.sol";
 import {IPoolManager} from "v4-core/interfaces/IPoolManager.sol";
-import {ImmutableState} from "v4-periphery/src/base/ImmutableState.sol";
+import {ImmutableState} from "v4-periphery/base/ImmutableState.sol";
         
 
 abstract contract SafeCallback is ImmutableState, IUnlockCallback {

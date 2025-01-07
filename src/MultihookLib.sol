@@ -1,18 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 // Anton Gulak https://t.me/gulak_a
-pragma solidity ^0.8.24;
+pragma solidity =0.8.26;
 
 import {IPoolManager} from "v4-core/interfaces/IPoolManager.sol";
 import {SafeCast} from "v4-core/libraries/SafeCast.sol";
 import {PoolKey} from "v4-core/types/PoolKey.sol";
 import {Currency} from "v4-core/types/Currency.sol";
 import {BalanceDeltaLibrary, toBalanceDelta, BalanceDelta} from "v4-core/types/BalanceDelta.sol";
-import {CurrencySettler} from "@uniswap/v4-core/test/utils/CurrencySettler.sol";
 import {Hooks, LPFeeLibrary} from "v4-core/libraries/Hooks.sol";
-import {IHooks} from "@uniswap/v4-core/src/interfaces/IHooks.sol";
+import {IHooks} from "v4-core/interfaces/IHooks.sol";
 import {BeforeSwapDelta, toBeforeSwapDelta, BeforeSwapDeltaLibrary} from "v4-core/types/BeforeSwapDelta.sol";
-import {BaseHook} from "v4-periphery/src/base/hooks/BaseHook.sol";
-import {CustomRevert, ParseBytes } from "@uniswap/v4-core/src/libraries/Hooks.sol";
+import {CustomRevert, ParseBytes } from "v4-core/libraries/Hooks.sol";
 import {BytesLib} from "./base/BytesLib.sol";
 
 struct PackedHook {
@@ -102,13 +100,11 @@ library MultihookLib {
         uint256 activatedHooks,
         address sender,
         PoolKey calldata key,
-        uint160 sqrtPriceX96,
-        bytes calldata hookData
+        uint160 sqrtPriceX96
     ) internal {
         PackedHook[] memory selectedHooks = getActivatedHooks(hooks, activatedHooks, BEFORE_INITIALIZE_BIT_SHIFT, BEFORE_INITIALIZE_QUEUE_BIT_SHIFT);
         for (uint8 i = 0; i < selectedHooks.length; ++i) {
-            bytes memory extractedData = extractData(hookData, selectedHooks[i].hookDataDist, BEFORE_INITIALIZE_DATA_BIT_SHIFT);
-            selectedHooks[i].hook.callHook(abi.encodeCall(IHooks.beforeInitialize, (sender, key, sqrtPriceX96, extractedData)));
+            selectedHooks[i].hook.callHook(abi.encodeCall(IHooks.beforeInitialize, (sender, key, sqrtPriceX96)));
         }
     }
 
@@ -118,13 +114,11 @@ library MultihookLib {
         address sender,
         PoolKey calldata key,
         uint160 sqrtPriceX96,
-        int24 tick,
-        bytes calldata hookData
+        int24 tick
     ) internal {
         PackedHook[] memory selectedHooks = getActivatedHooks(hooks, activatedHooks, AFTER_INITIALIZE_BIT_SHIFT, AFTER_INITIALIZE_QUEUE_BIT_SHIFT);
         for (uint256 i = 0; i < selectedHooks.length; ++i) {
-            bytes memory extractedData = extractData(hookData, selectedHooks[i].hookDataDist, AFTER_INITIALIZE_DATA_BIT_SHIFT);
-            selectedHooks[i].hook.callHook(abi.encodeCall(IHooks.afterInitialize, (sender, key, sqrtPriceX96, tick, extractedData)));
+            selectedHooks[i].hook.callHook(abi.encodeCall(IHooks.afterInitialize, (sender, key, sqrtPriceX96, tick)));
         }
     }
 
@@ -165,6 +159,7 @@ library MultihookLib {
         PoolKey calldata key,
         IPoolManager.ModifyLiquidityParams calldata params,
         BalanceDelta delta,
+        BalanceDelta feesAccrued,
         bytes calldata hookData
     ) internal returns(BalanceDelta hookDeltaSumm) {
         PackedHook[] memory selectedHooks = getActivatedHooks(hooks, activatedHooks, AFTER_ADD_LIQUIDITY_BIT_SHIFT, AFTER_ADD_LIQUIDITY_QUEUE_BIT_SHIFT);
@@ -173,7 +168,7 @@ library MultihookLib {
             bytes memory extractedData = extractData(hookData, selectedHooks[i].hookDataDist, AFTER_ADD_LIQUIDITY_DATA_BIT_SHIFT);
             BalanceDelta hookDelta = BalanceDelta.wrap(
                 selectedHooks[i].hook.callHookWithReturnDelta(
-                    abi.encodeCall(IHooks.afterAddLiquidity, (sender, key, params, delta, extractedData)),
+                    abi.encodeCall(IHooks.afterAddLiquidity, (sender, key, params, delta, feesAccrued, extractedData)),
                     selectedHooks[i].hook.hasPermission(Hooks.AFTER_ADD_LIQUIDITY_RETURNS_DELTA_FLAG)
                 )
             );
@@ -188,6 +183,7 @@ library MultihookLib {
         PoolKey calldata key,
         IPoolManager.ModifyLiquidityParams calldata params,
         BalanceDelta delta,
+        BalanceDelta feesAccrued,
         bytes calldata hookData
     ) internal returns(BalanceDelta hookDeltaSumm) {
         PackedHook[] memory selectedHooks = getActivatedHooks(hooks, activatedHooks, AFTER_REMOVE_LIQUIDITY_BIT_SHIFT, AFTER_REMOVE_LIQUIDITY_QUEUE_BIT_SHIFT);
@@ -196,7 +192,7 @@ library MultihookLib {
             bytes memory extractedData = extractData(hookData, selectedHooks[i].hookDataDist, AFTER_REMOVE_LIQUIDITY_DATA_BIT_SHIFT);
             BalanceDelta hookDelta = BalanceDelta.wrap(
                 selectedHooks[i].hook.callHookWithReturnDelta(
-                    abi.encodeCall(IHooks.afterRemoveLiquidity, (sender, key, params, delta, extractedData)),
+                    abi.encodeCall(IHooks.afterRemoveLiquidity, (sender, key, params, delta, feesAccrued, extractedData)),
                     selectedHooks[i].hook.hasPermission(Hooks.AFTER_REMOVE_LIQUIDITY_RETURNS_DELTA_FLAG)
                 )
             );
@@ -342,7 +338,8 @@ library MultihookLib {
         assembly ("memory-safe") {
             success := call(gas(), self, 0, add(data, 0x20), mload(data), 0, 0)
         }
-        if (!success) Wrap__FailedHookCall.selector.bubbleUpAndRevertWith(address(self));
+        if (!success) CustomRevert.bubbleUpAndRevertWith(address(self), bytes4(0), Wrap__FailedHookCall.selector);
+        
         assembly ("memory-safe") {
             result := mload(0x40)
             mstore(0x40, add(result, and(add(returndatasize(), 0x3f), not(0x1f))))

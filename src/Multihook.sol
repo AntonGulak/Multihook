@@ -1,12 +1,19 @@
 // SPDX-License-Identifier: Apache-2.0
 // Anton Gulak https://t.me/gulak_a
-pragma solidity ^0.8.24;
+pragma solidity =0.8.26;
 
 import {IUnlockCallback} from "v4-core/interfaces/callback/IUnlockCallback.sol";
-import {Ownable2Step, Ownable} from "@openzeppelin/contracts/access/Ownable2Step.sol";
-import {BaseHook, IHookPermissions, Hooks, IHooks, IPoolManager, PoolKey, BalanceDelta, BeforeSwapDelta} from "./base/BaseHook.sol";
-import {MultihookLib, CustomRevert, PackedHook, ParseBytes} from "./MultihookLib.sol";
 import {Currency, CurrencyLibrary} from "v4-core/types/Currency.sol";
+
+import {Ownable2Step, Ownable} from "@openzeppelin/contracts/access/Ownable2Step.sol";
+import {Hooks} from "v4-core/libraries/Hooks.sol";
+import {IPoolManager} from "v4-core/interfaces/IPoolManager.sol";
+import {IHooks} from "v4-core/interfaces/IHooks.sol";
+import {BalanceDelta} from "v4-core/types/BalanceDelta.sol";
+import {PoolKey} from "v4-core/types/PoolKey.sol";
+import {BeforeSwapDelta} from "v4-core/types/BeforeSwapDelta.sol";
+import {BaseHook, IHookPermissions} from "./base/BaseHook.sol";
+import {MultihookLib, CustomRevert, PackedHook, ParseBytes} from "./MultihookLib.sol";
 
 struct AcceptedMethod {
     address hook;
@@ -112,10 +119,9 @@ contract Multihook is BaseHook, Ownable2Step {
     function beforeInitialize(
         address sender,
         PoolKey calldata key,
-        uint160 sqrtPriceX96,
-        bytes calldata hookData
+        uint160 sqrtPriceX96
     ) external override returns (bytes4) {
-        getHooks().beforeInitialize(activatedHooks, sender, key, sqrtPriceX96, hookData);
+        getHooks().beforeInitialize(activatedHooks, sender, key, sqrtPriceX96);
         return BaseHook.beforeInitialize.selector;
     }
 
@@ -123,10 +129,9 @@ contract Multihook is BaseHook, Ownable2Step {
         address sender,
         PoolKey calldata key,
         uint160 sqrtPriceX96,
-        int24 tick,
-        bytes calldata hookData
+        int24 tick
     ) external override returns (bytes4) {
-        getHooks().afterInitialize(activatedHooks, sender, key, sqrtPriceX96, tick, hookData);
+        getHooks().afterInitialize(activatedHooks, sender, key, sqrtPriceX96, tick);
         return BaseHook.afterInitialize.selector;
     }
 
@@ -159,9 +164,10 @@ contract Multihook is BaseHook, Ownable2Step {
         PoolKey calldata key,
         IPoolManager.ModifyLiquidityParams calldata params,
         BalanceDelta delta,
+        BalanceDelta feesAccrued,
         bytes calldata hookData
     ) external override returns (bytes4, BalanceDelta) {
-        delta = getHooks().afterAddLiquidity(activatedHooks, sender, key, params, delta, hookData);
+        delta = getHooks().afterAddLiquidity(activatedHooks, sender, key, params, delta, feesAccrued, hookData);
         return (BaseHook.afterAddLiquidity.selector, delta);
     }
 
@@ -170,9 +176,10 @@ contract Multihook is BaseHook, Ownable2Step {
         PoolKey calldata key,
         IPoolManager.ModifyLiquidityParams calldata params,
         BalanceDelta delta,
+        BalanceDelta feesAccrued,
         bytes calldata hookData
     ) external override returns (bytes4, BalanceDelta) {
-        delta = getHooks().afterRemoveLiquidity(activatedHooks, sender, key, params, delta, hookData);
+        delta = getHooks().afterRemoveLiquidity(activatedHooks, sender, key, params, delta, feesAccrued, hookData);
         return (BaseHook.afterRemoveLiquidity.selector, delta);
     }
 
