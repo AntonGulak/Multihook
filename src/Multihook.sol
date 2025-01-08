@@ -293,16 +293,16 @@ contract Multihook is BaseHook, Ownable2Step {
     }
     
     function _setHooks(
-        PackedHook[] memory initHooks,
-        PackedHook[] storage shooks
+        PackedHook[] memory newHooks,
+        PackedHook[] storage cellHooks
     ) private {
-        if (initHooks.length > MultihookLib.MAX_HOOKS_COUNT) {
+        if (newHooks.length > MultihookLib.MAX_HOOKS_COUNT) {
             MaxHooksCountExceeded.selector.revertWith();
         }
-        for (uint256 i = 0; i < initHooks.length; ++i) {
-            address hookAddress = address(initHooks[i].hook);
-            Hooks.validateHookPermissions(initHooks[i].hook, IHookPermissions(hookAddress).getHookPermissions());
-            shooks.push(initHooks[i]);
+        for (uint256 i = 0; i < newHooks.length; ++i) {
+            address hookAddress = address(newHooks[i].hook);
+            Hooks.validateHookPermissions(newHooks[i].hook, IHookPermissions(hookAddress).getHookPermissions());
+            cellHooks.push(newHooks[i]);
         }
     }
 

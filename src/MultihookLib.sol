@@ -16,7 +16,7 @@ import {BytesLib} from "./base/BytesLib.sol";
 struct PackedHook {
     IHooks hook;
     uint96 hookQueue;
-    uint256 hookDataDist; //TODO: Store hookDataDist data separately, save the flag of the need to parse the date in hookQueue
+    uint256 hookDataDist;
 }
 
 library MultihookLib {
