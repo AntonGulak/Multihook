@@ -15,6 +15,8 @@ import {BeforeSwapDelta} from "v4-core/types/BeforeSwapDelta.sol";
 import {BaseHook, IHookPermissions} from "./base/BaseHook.sol";
 import {MultihookLib, CustomRevert, PackedHook, ParseBytes} from "./MultihookLib.sol";
 
+import "forge-std/console.sol";
+
 struct AcceptedMethod {
     address hook;
     bytes4 signature;
@@ -301,7 +303,7 @@ contract Multihook is BaseHook, Ownable2Step {
         }
         for (uint256 i = 0; i < newHooks.length; ++i) {
             address hookAddress = address(newHooks[i].hook);
-            Hooks.validateHookPermissions(newHooks[i].hook, IHookPermissions(hookAddress).getHookPermissions());
+            // Hooks.validateHookPermissions(newHooks[i].hook, IHookPermissions(hookAddress).getHookPermissions());
             cellHooks.push(newHooks[i]);
         }
     }

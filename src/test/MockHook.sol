@@ -33,18 +33,13 @@ contract MockHook {
     IPoolManager.SwapParams public argsAfterSwapParams;
     BalanceDelta public argsAfterSwapDelta;
 
+    Hooks.Permissions private permissions;
+    IPoolManager public poolManager;
 
-    constructor(IPoolManager poolManager) {
-    }
 
-    function getHookPermissions()
-        public
-        pure
-        
-        returns (Hooks.Permissions memory)
-    {
-        return
-            Hooks.Permissions({
+    constructor(IPoolManager _poolManager) {
+        poolManager = _poolManager;
+        permissions = Hooks.Permissions({
                 beforeInitialize: true,
                 afterInitialize: true,
                 beforeAddLiquidity: true, 
@@ -62,12 +57,26 @@ contract MockHook {
             });
     }
 
+    function getHookPermissions()
+        public
+        view
+        returns (Hooks.Permissions memory)
+    {
+        return permissions;
+    }
+
+    function setHookPermissions(Hooks.Permissions memory _permissions)
+        public
+        returns (Hooks.Permissions memory)
+    {
+        permissions = _permissions;
+    }
+
     function beforeInitialize(
         address /*sender*/,
         PoolKey calldata /*key*/,
-        uint160 /*sqrtPriceX96*/,
-        bytes calldata /*hookData*/
-    ) external pure returns (bytes4) {
+        uint160 /*sqrtPriceX96*/
+    ) external pure  returns (bytes4) {
         return BaseHook.beforeInitialize.selector;
     }
 
@@ -75,9 +84,8 @@ contract MockHook {
         address /*sender*/,
         PoolKey calldata /*key*/,
         uint160 /*sqrtPriceX96*/,
-        int24 /*tick*/,
-        bytes calldata /*hookData*/
-    ) external pure returns (bytes4) {
+        int24 /*tick*/
+    ) external pure  returns (bytes4) {
         return BaseHook.afterInitialize.selector;
     }
 
@@ -86,7 +94,7 @@ contract MockHook {
         PoolKey calldata /*key*/,
         IPoolManager.ModifyLiquidityParams calldata /*params*/,
         bytes calldata /*hookData*/
-    ) external pure returns (bytes4) {
+    ) external pure  returns (bytes4) {
         return BaseHook.beforeAddLiquidity.selector;
     }
 
@@ -95,7 +103,7 @@ contract MockHook {
         PoolKey calldata /*key*/,
         IPoolManager.ModifyLiquidityParams calldata /*params*/,
         bytes calldata /*hookData*/
-    ) external pure returns (bytes4) {
+    ) external pure  returns (bytes4) {
         return BaseHook.beforeRemoveLiquidity.selector;
     }
 
@@ -104,8 +112,9 @@ contract MockHook {
         PoolKey calldata /*key*/,
         IPoolManager.ModifyLiquidityParams calldata params,
         BalanceDelta delta,
+        BalanceDelta feesAccrued,
         bytes calldata /*hookData*/
-    ) external returns (bytes4, BalanceDelta) {
+    ) external  returns (bytes4, BalanceDelta) {
         argsParamsAfterAddLiquidity = params;
         argsDeltaAfterAddLiquidity = delta;
         return (BaseHook.afterAddLiquidity.selector, deltaAfterAddLiquidity);
@@ -116,8 +125,9 @@ contract MockHook {
         PoolKey calldata /*key*/,
         IPoolManager.ModifyLiquidityParams calldata params,
         BalanceDelta delta,
+        BalanceDelta feesAccrued,
         bytes calldata /*hookData*/
-    ) external returns (bytes4, BalanceDelta) {
+    ) external  returns (bytes4, BalanceDelta) {
         argsParamsAfterRemoveLiquidity = params;
         argsDeltaAfterRemoveLiquidity = delta;
         return (BaseHook.afterRemoveLiquidity.selector, deltaAfterRemoveLiquidity);
@@ -128,7 +138,7 @@ contract MockHook {
         PoolKey calldata /*key*/,
         IPoolManager.SwapParams calldata params,
         bytes calldata /*hookData*/
-    ) external returns (bytes4, BeforeSwapDelta, uint24) {
+    ) external  returns (bytes4, BeforeSwapDelta, uint24) {
         argsBeforeSwapParams = params;
         return (BaseHook.beforeSwap.selector, beforeSwapDelta, beforeSwapFee);
     }
@@ -139,7 +149,7 @@ contract MockHook {
         IPoolManager.SwapParams calldata params,
         BalanceDelta delta, 
         bytes calldata /*hookData*/
-    ) external returns (bytes4, int128) {
+    ) external  returns (bytes4, int128) {
         argsAfterSwapParams = params;
         argsAfterSwapDelta = delta;
         return (BaseHook.afterSwap.selector, afterSwapDeltaUnspecified);
@@ -151,7 +161,7 @@ contract MockHook {
         uint256 /*amount0*/,
         uint256 /*amount1*/,
         bytes calldata /*hookData*/
-    ) external pure returns (bytes4) {
+    ) external  pure returns (bytes4) {
         return BaseHook.beforeDonate.selector;
     }
 
@@ -161,7 +171,7 @@ contract MockHook {
         uint256 /*amount0*/,
         uint256 /*amount1*/,
         bytes calldata /*hookData*/
-    ) external pure returns (bytes4) {
+    ) external  pure returns (bytes4) {
         return BaseHook.afterDonate.selector;
     }
 

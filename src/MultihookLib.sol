@@ -172,6 +172,7 @@ library MultihookLib {
                     selectedHooks[i].hook.hasPermission(Hooks.AFTER_ADD_LIQUIDITY_RETURNS_DELTA_FLAG)
                 )
             );
+            
             hookDeltaSumm = hookDeltaSumm + hookDelta;
         }
     }
