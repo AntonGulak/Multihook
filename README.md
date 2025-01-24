@@ -11,3 +11,5 @@ Furthermore, most existing hooks require no code modifications. You simply need 
 # Incompatibilities at the moment:
 1. If a hook uses the PoolManager address as `msg.sender`.
 2. If a hook requires a direct call, bypassing the MultiHook (e.g., for asset deposits). The solution is simple – allow all connected hooks to send a request through the fallback, but security concerns need further exploration.
+
+For detailed documentation, check out [Multihook Documentation](./docs/MultihookDocumentation.md).
